@@ -1,0 +1,79 @@
+{
+  "_$type": "Animator",
+  "enabled": true,
+  "controller": null,
+  "cullingMode": 0,
+  "controllerLayers": [
+    {
+      "_$type": "AnimatorControllerLayer",
+      "name": "layer",
+      "playOnWake": true,
+      "blendingMode": 0,
+      "defaultWeight": 1,
+      "avatarMask": null,
+      "states": [
+        {
+          "_$type": "AnimatorState",
+          "name": "walk",
+          "_isLooping": 1,
+          "speed": 1,
+          "clipStart": 0,
+          "cycleOffset": 0,
+          "clipEnd": 1,
+          "clip": {
+            "_$uuid": "3aa00497-f382-4493-b698-1de1cbed4fd8"
+          },
+          "soloTransitions": [],
+          "scripts": null,
+          "x": 551.3011436746012,
+          "y": 361.2119808232304,
+          "id": "0",
+          "loopState": 0,
+          "loop": -1
+        },
+        {
+          "x": 10,
+          "y": 100,
+          "loopState": 0,
+          "_isLooping": 0,
+          "id": "-1",
+          "name": "进入",
+          "speed": 1,
+          "clipEnd": 1,
+          "soloTransitions": [
+            {
+              "id": "1"
+            }
+          ]
+        },
+        {
+          "x": 550,
+          "y": 100,
+          "loopState": 0,
+          "_isLooping": 0,
+          "id": "-2",
+          "name": "任何状态",
+          "speed": 1,
+          "clipEnd": 1
+        },
+        {
+          "x": 306,
+          "y": 399,
+          "loopState": 0,
+          "_isLooping": 1,
+          "id": "1",
+          "name": "idle",
+          "speed": 1,
+          "clipEnd": 1,
+          "clip": {
+            "_$uuid": "8f2a4792-cef2-46d1-89b1-7052d26a8b16"
+          },
+          "soloTransitions": []
+        }
+      ],
+      "defaultStateName": "Layer0"
+    }
+  ],
+  "sleep": false,
+  "layerW": 150
+}

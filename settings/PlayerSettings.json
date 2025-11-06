@@ -1,0 +1,14 @@
+{
+  "modules": {
+    "laya.ui": true,
+    "laya.d3": true,
+    "laya.physics3D": true,
+    "laya.ik": true
+  },
+  "addons": {
+    "laya.ui": "ui2"
+  },
+  "splash": {
+    "fit": "center"
+  }
+}
