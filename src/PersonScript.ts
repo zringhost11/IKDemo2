@@ -159,163 +159,20 @@ export class PersonScript extends Laya.Script {
             const groundNormal = hitResult.normal; // 法线是一个单位向量，指向地面垂直向上的方向
             const hitPoint = hitResult.point; // 碰撞点位置
 
-            // 计算 IK Target 位置：碰撞点 + 法线方向 × 脚底高度
-            const footBottomHeight = 0.0; // 脚底高度偏移（单位：米）
-            const targetPosition = new Laya.Vector3();
-            targetPosition.x = hitPoint.x + groundNormal.x * footBottomHeight;
-            targetPosition.y = hitPoint.y + groundNormal.y * footBottomHeight;
-            targetPosition.z = hitPoint.z + groundNormal.z * footBottomHeight;
+            // // 计算 IK Target 位置：碰撞点 + 法线方向 × 脚底高度
+            // const footBottomHeight = 0.0; // 脚底高度偏移（单位：米）
+            // const targetPosition = new Laya.Vector3();
+            // targetPosition.x = hitPoint.x + groundNormal.x * footBottomHeight;
+            // targetPosition.y = hitPoint.y + groundNormal.y * footBottomHeight;
+            // targetPosition.z = hitPoint.z + groundNormal.z * footBottomHeight;
 
-            // 计算 IK Target 方向
-            // 目标：构建一个旋转，让脚部的上方向对齐到地面法线
-            // 方法：从局部坐标系 (上=0,1,0, 前=0,0,1) 旋转到 (上=法线, 前=计算得出)
+            // IK Target 方向：直接使用地面法线（垂直于地面）
+            const targetDirection = groundNormal.clone();
             
-            // 脚部的局部坐标系
-            const footLocalUp = new Laya.Vector3(0, 1, 0);
-            const footLocalForward = new Laya.Vector3(0, 0, 1);
-            const footLocalRight = new Laya.Vector3(1, 0, 0);
-            
-            // 目标上方向就是地面法线
-            const targetUp = groundNormal.clone();
-            
-            // 计算目标前方向：保持前方向在水平面上的投影
-            // 先计算一个参考前方向（使用角色的前方向或脚部的当前前方向）
-            const footRotation = toeBase.transform.rotation.clone();
-            const footWorldForward = new Laya.Vector3();
-            Laya.Vector3.transformQuat(footLocalForward, footRotation, footWorldForward);
-            
-            // 计算目标右方向：targetRight = normalize(cross(targetUp, footWorldForward))
-            const targetRight = new Laya.Vector3();
-            Laya.Vector3.cross(targetUp, footWorldForward, targetRight);
-            const rightLength = Math.sqrt(targetRight.x * targetRight.x + targetRight.y * targetRight.y + targetRight.z * targetRight.z);
-            
-            let targetDirection: Laya.Vector3;
-            
-            if (rightLength > 0.001) {
-                // 归一化右方向
-                targetRight.x /= rightLength;
-                targetRight.y /= rightLength;
-                targetRight.z /= rightLength;
-                
-                // 计算目标前方向：targetForward = cross(targetRight, targetUp)
-                Laya.Vector3.cross(targetRight, targetUp, targetDirection = new Laya.Vector3());
-                
-                // 归一化
-                const dirLength = Math.sqrt(targetDirection.x * targetDirection.x + targetDirection.y * targetDirection.y + targetDirection.z * targetDirection.z);
-                if (dirLength > 0.001) {
-                    targetDirection.x /= dirLength;
-                    targetDirection.y /= dirLength;
-                    targetDirection.z /= dirLength;
-                } else {
-                    // 如果计算失败，使用默认前方向
-                    targetDirection = new Laya.Vector3(0, 0, 1);
-                }
-            } else {
-                // 如果法线和前方向平行，使用垂直方向作为参考
-                const vertical = new Laya.Vector3(0, 1, 0);
-                const tempRight = new Laya.Vector3();
-                Laya.Vector3.cross(targetUp, vertical, tempRight);
-                const tempRightLength = Math.sqrt(tempRight.x * tempRight.x + tempRight.y * tempRight.y + tempRight.z * tempRight.z);
-                
-                if (tempRightLength > 0.001) {
-                    tempRight.x /= tempRightLength;
-                    tempRight.y /= tempRightLength;
-                    tempRight.z /= tempRightLength;
-                    Laya.Vector3.cross(tempRight, targetUp, targetDirection = new Laya.Vector3());
-                    const dirLength = Math.sqrt(targetDirection.x * targetDirection.x + targetDirection.y * targetDirection.y + targetDirection.z * targetDirection.z);
-                    if (dirLength > 0.001) {
-                        targetDirection.x /= dirLength;
-                        targetDirection.y /= dirLength;
-                        targetDirection.z /= dirLength;
-                    } else {
-                        targetDirection = new Laya.Vector3(0, 0, 1);
-                    }
-                } else {
-                    // 完全垂直的情况，使用默认前方向
-                    targetDirection = new Laya.Vector3(0, 0, 1);
-                }
-            }
-            
+            this.ikcom.setTarget(chain, new Laya.IK_Target(hitPoint, targetDirection));
 
-            // 可视化：绘制碰撞点、法线和 IK 方向
-            if (this.debugLineRenderer) {
-                // 根据左右脚选择不同颜色
-                // 右脚：红色系（红色=射线，橙色=法线）
-                // 左脚：蓝色系（蓝色=射线，青色=法线）
-                const rayColor = isRightFoot
-                    ? new Laya.Color(1, 0, 0, 1)      // 右脚：红色
-                    : new Laya.Color(0, 0.5, 1, 1);   // 左脚：蓝色
-
-                const normalColor = isRightFoot
-                    ? new Laya.Color(1, 0.5, 0, 1)     // 右脚：橙色
-                    : new Laya.Color(0, 1, 1, 1);      // 左脚：青色
-
-                // 1. 绘制射线：从脚部到碰撞点
-                if (this.debugLineIndex < this.debugLineRenderer.lineCount) {
-                    this.debugLineRenderer.setLine(this.debugLineIndex, footWorldPos, hitPoint, rayColor, rayColor);
-                } else {
-                    this.debugLineRenderer.addLine(footWorldPos, hitPoint, rayColor, rayColor);
-                }
-                this.debugLineIndex++;
-
-                // 2. 绘制法线：从碰撞点开始，沿着法线方向绘制一条线
-                const normalLength = 0.5; // 法线显示长度（米）
-                const normalEnd = new Laya.Vector3();
-                normalEnd.x = hitPoint.x + groundNormal.x * normalLength;
-                normalEnd.y = hitPoint.y + groundNormal.y * normalLength;
-                normalEnd.z = hitPoint.z + groundNormal.z * normalLength;
-
-                if (this.debugLineIndex < this.debugLineRenderer.lineCount) {
-                    this.debugLineRenderer.setLine(this.debugLineIndex, hitPoint, normalEnd, normalColor, normalColor);
-                } else {
-                    this.debugLineRenderer.addLine(hitPoint, normalEnd, normalColor, normalColor);
-                }
-                this.debugLineIndex++;
-
-                // 3. 绘制 IK Target 方向：从 IK Target 位置开始，沿着方向绘制一条线
-                const directionLength = 0.3; // 方向显示长度（米）
-                const directionEnd = new Laya.Vector3();
-                directionEnd.x = targetPosition.x + targetDirection.x * directionLength;
-                directionEnd.y = targetPosition.y + targetDirection.y * directionLength;
-                directionEnd.z = targetPosition.z + targetDirection.z * directionLength;
-                
-                const directionColor = isRightFoot
-                    ? new Laya.Color(1, 1, 0, 1)     // 右脚：黄色（表示 IK 方向）
-                    : new Laya.Color(0, 1, 0, 1);    // 左脚：绿色（表示 IK 方向）
-
-                if (this.debugLineIndex < this.debugLineRenderer.lineCount) {
-                    this.debugLineRenderer.setLine(this.debugLineIndex, targetPosition, directionEnd, directionColor, directionColor);
-                } else {
-                    this.debugLineRenderer.addLine(targetPosition, directionEnd, directionColor, directionColor);
-                }
-                this.debugLineIndex++;
-
-                // 3. 绘制 IK Target 位置（用一个小十字标记）
-                const markerSize = 0.05; // 标记大小（米）
-                const markerColor = isRightFoot
-                    ? new Laya.Color(1, 1, 0, 1)      // 右脚：黄色（表示 IK Target）
-                    : new Laya.Color(0, 1, 0, 1);     // 左脚：绿色（表示 IK Target）
-
-                // X轴方向的线
-                const markerX1 = new Laya.Vector3(targetPosition.x - markerSize, targetPosition.y, targetPosition.z);
-                const markerX2 = new Laya.Vector3(targetPosition.x + markerSize, targetPosition.y, targetPosition.z);
-                if (this.debugLineIndex < this.debugLineRenderer.lineCount) {
-                    this.debugLineRenderer.setLine(this.debugLineIndex, markerX1, markerX2, markerColor, markerColor);
-                } else {
-                    this.debugLineRenderer.addLine(markerX1, markerX2, markerColor, markerColor);
-                }
-                this.debugLineIndex++;
-
-                // Z轴方向的线
-                const markerZ1 = new Laya.Vector3(targetPosition.x, targetPosition.y, targetPosition.z - markerSize);
-                const markerZ2 = new Laya.Vector3(targetPosition.x, targetPosition.y, targetPosition.z + markerSize);
-                if (this.debugLineIndex < this.debugLineRenderer.lineCount) {
-                    this.debugLineRenderer.setLine(this.debugLineIndex, markerZ1, markerZ2, markerColor, markerColor);
-                } else {
-                    this.debugLineRenderer.addLine(markerZ1, markerZ2, markerColor, markerColor);
-                }
-                this.debugLineIndex++;
-            }
+            // 可视化：绘制碰撞点和 IK 方向
+            this.drawIKDebugLines(hitPoint, targetDirection);
         } else {
 
             // 绘制失败的射线（灰色）
@@ -336,7 +193,60 @@ export class PersonScript extends Laya.Script {
         }
     }
 
+    /**
+     * 绘制 IK 调试线条（只显示 hitPoint 和 targetDirection）
+     * @param hitPoint 碰撞点
+     * @param targetDirection IK Target 方向
+     */
+    private drawIKDebugLines(
+        hitPoint: Laya.Vector3,
+        targetDirection: Laya.Vector3
+    ): void {
+        if (!this.debugLineRenderer) {
+            return;
+        }
 
+        // 统一颜色
+        const pointColor = new Laya.Color(1, 0, 0, 1);      // 红色（碰撞点）
+        const directionColor = new Laya.Color(1, 1, 0, 1);   // 黄色（IK 方向）
+
+        // 1. 绘制碰撞点标记（用一个小十字）
+        const markerSize = 0.05; // 标记大小（米）
+
+        // X轴方向的线
+        const markerX1 = new Laya.Vector3(hitPoint.x - markerSize, hitPoint.y, hitPoint.z);
+        const markerX2 = new Laya.Vector3(hitPoint.x + markerSize, hitPoint.y, hitPoint.z);
+        if (this.debugLineIndex < this.debugLineRenderer.lineCount) {
+            this.debugLineRenderer.setLine(this.debugLineIndex, markerX1, markerX2, pointColor, pointColor);
+        } else {
+            this.debugLineRenderer.addLine(markerX1, markerX2, pointColor, pointColor);
+        }
+        this.debugLineIndex++;
+
+        // Z轴方向的线
+        const markerZ1 = new Laya.Vector3(hitPoint.x, hitPoint.y, hitPoint.z - markerSize);
+        const markerZ2 = new Laya.Vector3(hitPoint.x, hitPoint.y, hitPoint.z + markerSize);
+        if (this.debugLineIndex < this.debugLineRenderer.lineCount) {
+            this.debugLineRenderer.setLine(this.debugLineIndex, markerZ1, markerZ2, pointColor, pointColor);
+        } else {
+            this.debugLineRenderer.addLine(markerZ1, markerZ2, pointColor, pointColor);
+        }
+        this.debugLineIndex++;
+
+        // 2. 绘制 IK Target 方向：从碰撞点开始，沿着方向绘制一条线
+        const directionLength = 0.3; // 方向显示长度（米）
+        const directionEnd = new Laya.Vector3();
+        directionEnd.x = hitPoint.x + targetDirection.x * directionLength;
+        directionEnd.y = hitPoint.y + targetDirection.y * directionLength;
+        directionEnd.z = hitPoint.z + targetDirection.z * directionLength;
+
+        if (this.debugLineIndex < this.debugLineRenderer.lineCount) {
+            this.debugLineRenderer.setLine(this.debugLineIndex, hitPoint, directionEnd, directionColor, directionColor);
+        } else {
+            this.debugLineRenderer.addLine(hitPoint, directionEnd, directionColor, directionColor);
+        }
+        this.debugLineIndex++;
+    }
 
     //每帧更新时执行，在update之后执行，尽量不要在这里写大循环逻辑或者使用getComponent方法
     //onLateUpdate(): void {}
