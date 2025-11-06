@@ -159,13 +159,6 @@ export class PersonScript extends Laya.Script {
             const groundNormal = hitResult.normal; // 法线是一个单位向量，指向地面垂直向上的方向
             const hitPoint = hitResult.point; // 碰撞点位置
 
-            // // 计算 IK Target 位置：碰撞点 + 法线方向 × 脚底高度
-            // const footBottomHeight = 0.0; // 脚底高度偏移（单位：米）
-            // const targetPosition = new Laya.Vector3();
-            // targetPosition.x = hitPoint.x + groundNormal.x * footBottomHeight;
-            // targetPosition.y = hitPoint.y + groundNormal.y * footBottomHeight;
-            // targetPosition.z = hitPoint.z + groundNormal.z * footBottomHeight;
-
             // IK Target 方向：直接使用地面法线（垂直于地面）
             const targetDirection = groundNormal.clone();
             
@@ -175,21 +168,6 @@ export class PersonScript extends Laya.Script {
             this.drawIKDebugLines(hitPoint, targetDirection);
         } else {
 
-            // 绘制失败的射线（灰色）
-            if (this.debugLineRenderer) {
-                const failedRayEnd = new Laya.Vector3();
-                failedRayEnd.x = rayStartPos.x;
-                failedRayEnd.y = rayStartPos.y - raycastDistance;
-                failedRayEnd.z = rayStartPos.z;
-
-                const grayColor = new Laya.Color(0.5, 0.5, 0.5, 1); // 灰色
-                if (this.debugLineIndex < this.debugLineRenderer.lineCount) {
-                    this.debugLineRenderer.setLine(this.debugLineIndex, rayStartPos, failedRayEnd, grayColor, grayColor);
-                } else {
-                    this.debugLineRenderer.addLine(rayStartPos, failedRayEnd, grayColor, grayColor);
-                }
-                this.debugLineIndex++;
-            }
         }
     }
 

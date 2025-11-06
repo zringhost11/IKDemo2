@@ -131,13 +131,6 @@
             {
               "_$type": "11188e86-7135-4043-a96c-35d2a114a236",
               "scriptPath": "../src/PersonScript.ts"
-            },
-            {
-              "_$type": "IK_Comp",
-              "chainDatas": [],
-              "solverIteration": 10,
-              "dirSolverIteration": 10,
-              "dampingFactor": 0.1
             }
           ],
           "_$child": [
@@ -179,26 +172,21 @@
                       "chainDatas": [
                         {
                           "_$type": "IK_ChainData",
+                          "name": "right",
                           "end": {
-                            "_$ref": [
-                              "q71t19h9",
-                              "#174"
-                            ]
+                            "_$ref": "9g20tf4y"
                           },
                           "root": {
                             "_$ref": [
                               "q71t19h9",
-                              "#173"
+                              "#171"
                             ]
                           },
                           "bones": [
                             {
                               "_$type": "BoneData",
                               "data": {
-                                "_$ref": [
-                                  "q71t19h9",
-                                  "#174"
-                                ]
+                                "_$ref": "9g20tf4y"
                               }
                             },
                             {
@@ -209,14 +197,137 @@
                                   "#173"
                                 ]
                               }
+                            },
+                            {
+                              "_$type": "BoneData",
+                              "data": {
+                                "_$ref": [
+                                  "q71t19h9",
+                                  "#172"
+                                ]
+                              }
+                            },
+                            {
+                              "_$type": "BoneData",
+                              "data": {
+                                "_$ref": [
+                                  "q71t19h9",
+                                  "#171"
+                                ]
+                              }
+                            }
+                          ],
+                          "enable": true
+                        },
+                        {
+                          "_$type": "IK_ChainData",
+                          "name": "left",
+                          "end": {
+                            "_$ref": "qygln5jw"
+                          },
+                          "root": {
+                            "_$ref": [
+                              "q71t19h9",
+                              "#166"
+                            ]
+                          },
+                          "bones": [
+                            {
+                              "_$type": "BoneData",
+                              "data": {
+                                "_$ref": "qygln5jw"
+                              }
+                            },
+                            {
+                              "_$type": "BoneData",
+                              "data": {
+                                "_$ref": [
+                                  "q71t19h9",
+                                  "#168"
+                                ]
+                              }
+                            },
+                            {
+                              "_$type": "BoneData",
+                              "data": {
+                                "_$ref": [
+                                  "q71t19h9",
+                                  "#167"
+                                ]
+                              }
+                            },
+                            {
+                              "_$type": "BoneData",
+                              "data": {
+                                "_$ref": [
+                                  "q71t19h9",
+                                  "#166"
+                                ]
+                              }
                             }
                           ],
                           "enable": true
                         }
                       ],
-                      "solverIteration": 10,
+                      "solverIteration": 50,
                       "dirSolverIteration": 10,
                       "dampingFactor": 0.1
+                    }
+                  ],
+                  "_$child": [
+                    {
+                      "_$id": "qygln5jw",
+                      "_$parent": "#168",
+                      "_$type": "Sprite3D",
+                      "name": "leftFoot",
+                      "transform": {
+                        "localPosition": {
+                          "_$type": "Vector3",
+                          "x": 0.000044896181693232506,
+                          "y": 3.3634627450134076,
+                          "z": -8.737856273228715
+                        },
+                        "localRotation": {
+                          "_$type": "Quaternion",
+                          "x": -0.034820628774494114,
+                          "y": 0.44246127912937444,
+                          "z": 0.8933492814106841,
+                          "w": 0.07030363920851447
+                        },
+                        "localScale": {
+                          "_$type": "Vector3",
+                          "x": 0.9999999475353194,
+                          "y": 0.9999999818741641,
+                          "z": 0.9999999928251148
+                        }
+                      }
+                    },
+                    {
+                      "_$id": "9g20tf4y",
+                      "_$parent": "#173",
+                      "_$type": "Sprite3D",
+                      "name": "rightFoot",
+                      "transform": {
+                        "localPosition": {
+                          "_$type": "Vector3",
+                          "x": -1.589390614757093,
+                          "y": 2.4991490864334196,
+                          "z": -10.74291454377095
+                        },
+                        "localRotation": {
+                          "_$type": "Quaternion",
+                          "x": -0.03461310881831551,
+                          "y": -0.4405783254294578,
+                          "z": -0.8942909830047772,
+                          "w": 0.07025887542549714
+                        },
+                        "localScale": {
+                          "_$type": "Vector3",
+                          "x": 1.0000000322353697,
+                          "y": 0.9999999555329984,
+                          "z": 1.0000000273396632
+                        }
+                      }
                     }
                   ]
                 }
@@ -322,39 +433,6 @@
               },
               "collisionGroup": 1,
               "canCollideWith": -1
-            }
-          ]
-        },
-        {
-          "_$id": "nzdzysu5",
-          "_$type": "Sprite3D",
-          "name": "Cube",
-          "transform": {
-            "localPosition": {
-              "_$type": "Vector3",
-              "x": 1.1662248432883473,
-              "z": -3.5682410539489147
-            }
-          },
-          "_$comp": [
-            {
-              "_$type": "MeshFilter",
-              "sharedMesh": {
-                "_$uuid": "6e013e32-fec7-4397-80d1-f918a07607be",
-                "_$type": "Mesh"
-              }
-            },
-            {
-              "_$type": "MeshRenderer",
-              "lightmapScaleOffset": {
-                "_$type": "Vector4"
-              },
-              "sharedMaterials": [
-                {
-                  "_$uuid": "6f90bbb0-bcb2-4311-8a9d-3d8277522098",
-                  "_$type": "Material"
-                }
-              ]
             }
           ]
         }
