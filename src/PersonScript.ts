@@ -4,7 +4,6 @@ const { regClass, property } = Laya;
 export class PersonScript extends Laya.Script {
     declare owner: Laya.Sprite3D;
     //declare owner : Laya.Sprite;
-    private characterController: Laya.CharacterController;
     private animator: Laya.Animator;
     private lastDirection: number = 0; // 0: 无方向, -1: 左, 1: 右
     private rightToeBase: Laya.Sprite3D;
@@ -18,10 +17,34 @@ export class PersonScript extends Laya.Script {
     private debugLineIndex: number = 0; // 当前线条索引
     private leftChain: Laya.IK_Chain;
     private rightChain: Laya.IK_Chain;
-    
+
     // 脚部的初始旋转（用于补偿初始角度）
     private rightFootInitialRotation: Laya.Quaternion;
     private leftFootInitialRotation: Laya.Quaternion;
+
+    // 基础移动参数
+    private moveSpeed: number = 1; // 米/秒
+    private gravity: number = -30; // 米/秒^2
+    private verticalVelocity: number = 0;
+    private isGrounded: boolean = false;
+    private groundCheckHeight: number = 1.0;
+    private groundCheckDistance: number = 3.0;
+    private _stepUpSpeed: number = 1; // 上台阶平滑速度（米/秒）
+    private _stepDownSpeed: number = 1; // 下台阶平滑速度（米/秒）
+    //@property({ type: Number, min: 0.1, max: 10, step: 0.1 })
+    set stepUpSpeed(value: number) {
+        this._stepUpSpeed = value;
+    }
+    get stepUpSpeed(): number {
+        return this._stepUpSpeed;
+    }
+    //@property({ type: Number, min: 0.1, max: 10, step: 0.1 })
+    set stepDownSpeed(value: number) {
+        this._stepDownSpeed = value;
+    }
+    get stepDownSpeed(): number {
+        return this._stepDownSpeed;
+    }
 
     //组件被激活后执行，此时所有节点和组件均已创建完毕，此方法只执行一次
     //onAwake(): void {}
@@ -34,8 +57,7 @@ export class PersonScript extends Laya.Script {
 
     //第一次执行update之前执行，只会执行一次
     onStart(): void {
-        this.characterController = this.owner.getComponent(Laya.CharacterController);
-        const node = this.owner.getChild("move").getChild("Swagger Walk");
+        const node = this.owner;
         const rightToeBase = node.findChild("mixamorig:RightFoot");
         const leftToeBase = node.findChild("mixamorig:LeftFoot");
         const ikcom = node.getComponent(Laya.IK_Comp);
@@ -55,7 +77,7 @@ export class PersonScript extends Laya.Script {
         }
 
         // 初始化调试线条渲染器（用于可视化法线）
-        this.initDebugRenderer();
+        //this.initDebugRenderer();
     }
 
     /**
@@ -71,6 +93,28 @@ export class PersonScript extends Laya.Script {
         this.debugLineRenderer = debugNode.addComponent(Laya.PixelLineRenderer);
         this.debugLineRenderer.maxLineCount = 100; // 设置最大线条数量
     }
+    private _leftBlendWeight: number = 1;
+    private _rightBlendWeight: number = 1;
+    @property({ type: Number, min: 0, max: 1 })
+    set leftBlendWeight(value: number) {
+        this._leftBlendWeight = value;
+        if (!this.leftChain) return;
+        this.leftChain.blendWeight = value;
+    }
+    @property({ type: Number, min: 0, max: 1 })
+    set rightBlendWeight(value: number) {
+        this._rightBlendWeight = value;
+        if (!this.rightChain) return;
+        this.rightChain.blendWeight = value;
+    }
+    get leftBlendWeight(): number {
+        if (!this.leftChain) return this._leftBlendWeight;
+        return this.leftChain.blendWeight;
+    }
+    get rightBlendWeight(): number {
+        if (!this.rightChain) return this._rightBlendWeight;
+        return this.rightChain.blendWeight;
+    }
 
     //手动调用节点销毁时执行
     //onDestroy(): void {}
@@ -85,6 +129,7 @@ export class PersonScript extends Laya.Script {
         }
         let playName = "idle";
         let currentDirection = 0;
+        const deltaTime = Math.max(Laya.timer.delta / 1000, 1 / 1000);
 
         if (Laya.InputManager.hasKeyDown("a")) {
             playName = "walk";
@@ -102,14 +147,16 @@ export class PersonScript extends Laya.Script {
                 this.owner.transform.localRotationEuler = new Laya.Vector3(0, 0, 0);
             }
             this.lastDirection = currentDirection;
-            this.characterController.move(new Laya.Vector3(0, 0, 0.015 * currentDirection));
         }
+
+        if (playName === "walk" && currentDirection !== 0) {
+            this.moveForward(deltaTime);
+        }
+
+        this.updateGrounding(deltaTime);
 
         if (this.animator.getControllerLayer(0).getCurrentPlayState().animatorState.name !== playName) {
             this.animator.play(playName);
-            if ("walk" !== playName) {
-                this.characterController.move(new Laya.Vector3(0, 0, 0));
-            }
         }
 
         // 重置调试线条索引（每帧重新开始）
@@ -161,13 +208,75 @@ export class PersonScript extends Laya.Script {
 
             // IK Target 方向：直接使用地面法线（垂直于地面）
             const targetDirection = groundNormal.clone();
-            
+
             this.ikcom.setTarget(chain, new Laya.IK_Target(hitPoint, targetDirection));
 
             // 可视化：绘制碰撞点和 IK 方向
             this.drawIKDebugLines(hitPoint, targetDirection);
         } else {
 
+        }
+    }
+
+    /**
+     * 沿角色前进方向移动
+     * @param deltaTime 帧间隔秒
+     */
+    private moveForward(deltaTime: number): void {
+        const displacement = new Laya.Vector3(0, 0, this.moveSpeed * deltaTime);
+        this.owner.transform.translate(displacement, true);
+    }
+
+    /**
+     * 将角色与地面对齐并处理重力
+     * @param deltaTime 帧间隔秒
+     */
+    private updateGrounding(deltaTime: number): void {
+        if (!this.scene3D) {
+            return;
+        }
+
+        const transform = this.owner.transform;
+        const currentPosition = transform.position.clone();
+
+        const rayStartPos = currentPosition.clone();
+        rayStartPos.y += this.groundCheckHeight;
+
+        const ray = new Laya.Ray(rayStartPos, new Laya.Vector3(0, -1, 0));
+        const hitResult = new Laya.HitResult();
+        const rayDistance = this.groundCheckHeight + this.groundCheckDistance;
+        const hit = this.scene3D.physicsSimulation.rayCast(ray, hitResult, rayDistance);
+
+        if (hit && hitResult.succeeded) {
+            const groundY = hitResult.point.y;
+            const currentY = transform.position.y;
+            if (!this.isGrounded && this.verticalVelocity < 0) {
+                this.verticalVelocity = 0;
+            }
+            this.isGrounded = true;
+            let targetY = groundY;
+            if (groundY > currentY) {
+                const riseDistance = this.stepUpSpeed * deltaTime;
+                targetY = Math.min(currentY + riseDistance, groundY);
+            } else if (groundY < currentY) {
+                const dropDistance = this._stepDownSpeed * deltaTime;
+                const maxDrop = currentY - dropDistance;
+                // 只有在台阶高度差在可控范围内时才平滑下降
+                if (currentY - groundY <= this.groundCheckHeight + this.groundCheckDistance) {
+                    targetY = Math.max(maxDrop, groundY);
+                    this.verticalVelocity = 0;
+                }
+            }
+            const newPosition = transform.position.clone();
+            newPosition.y = targetY;
+            transform.position = newPosition;
+        } else {
+            this.isGrounded = false;
+            this.verticalVelocity += this.gravity * deltaTime;
+            const fallDistance = this.verticalVelocity * deltaTime;
+            if (fallDistance !== 0) {
+                transform.translate(new Laya.Vector3(0, fallDistance, 0), false);
+            }
         }
     }
 
