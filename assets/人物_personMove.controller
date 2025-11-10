@@ -1,0 +1,82 @@
+{
+  "_$type": "Animator",
+  "enabled": true,
+  "cullingMode": 2,
+  "controllerLayers": [
+    {
+      "name": "Base Layer",
+      "defaultStateName": "personMove",
+      "playOnWake": true,
+      "blendingMode": 1,
+      "states": [
+        {
+          "name": "walk",
+          "clip": {
+            "_$uuid": "2e0da64e-592d-4fcd-b980-5c80d57ff061"
+          },
+          "loop": -1,
+          "speed": 1,
+          "clipEnd": 1,
+          "x": 387.34367544588406,
+          "y": 394.6321324907621,
+          "id": "0",
+          "loopState": 0
+        },
+        {
+          "x": 10,
+          "y": 100,
+          "loopState": 0,
+          "_isLooping": 0,
+          "id": "-1",
+          "name": "进入",
+          "speed": 1,
+          "clipEnd": 1,
+          "soloTransitions": [
+            {
+              "id": "1"
+            }
+          ]
+        },
+        {
+          "x": 550,
+          "y": 100,
+          "loopState": 0,
+          "_isLooping": 0,
+          "id": "-2",
+          "name": "任何状态",
+          "speed": 1,
+          "clipEnd": 1
+        },
+        {
+          "x": 178,
+          "y": 331,
+          "loopState": 0,
+          "_isLooping": 0,
+          "id": "1",
+          "name": "idle",
+          "speed": 1,
+          "clipEnd": 1,
+          "clip": {
+            "_$uuid": "578a799f-79af-494b-84a1-ec0d4925022d"
+          }
+        },
+        {
+          "x": 549.1739723207672,
+          "y": 292.37920290243153,
+          "loopState": 0,
+          "_isLooping": 0,
+          "id": "3",
+          "name": "run",
+          "speed": 1,
+          "clipEnd": 1,
+          "clip": {
+            "_$uuid": "dc0f7131-dcfc-4c13-8de0-4cbf4ddeefe0"
+          }
+        }
+      ],
+      "defaultWeight": 1
+    }
+  ],
+  "sleep": false,
+  "layerW": 150
+}

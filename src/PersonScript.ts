@@ -5,11 +5,13 @@ export class PersonScript extends Laya.Script {
     declare owner: Laya.Sprite3D;
     //declare owner : Laya.Sprite;
     private animator: Laya.Animator;
-    private lastDirection: number = 0; // 0: 无方向, -1: 左, 1: 右
+    private lastDirection: number = 1; // 0: 无方向, -1: 左, 1: 右
     private rightToeBase: Laya.Sprite3D;
     private leftToeBase: Laya.Sprite3D;
     private ikcom: Laya.IK_Comp;
     private scene3D: Laya.Scene3D;
+    private pivotToFootOffset: number = 0;
+    private pivotOffsetInitialized: boolean = false;
 
     // 调试用：法线可视化
     private debugLineRenderer: Laya.PixelLineRenderer;
@@ -24,13 +26,21 @@ export class PersonScript extends Laya.Script {
 
     // 基础移动参数
     private moveSpeed: number = 1; // 米/秒
+    private runSpeedMultiplier: number = 3; // 奔跑时的速度倍率
     private gravity: number = -30; // 米/秒^2
     private verticalVelocity: number = 0;
     private isGrounded: boolean = false;
     private groundCheckHeight: number = 1.0;
     private groundCheckDistance: number = 3.0;
-    private _stepUpSpeed: number = 1; // 上台阶平滑速度（米/秒）
-    private _stepDownSpeed: number = 1; // 下台阶平滑速度（米/秒）
+    private _stepUpSpeed: number = 2; // 上台阶平滑速度（米/秒）
+    private _stepDownSpeed: number = 2; // 下台阶平滑速度（米/秒）
+    private readonly doubleTapThresholdMs: number = 300; // 双击阈值（毫秒）
+    private keyLastDownTime: Record<string, number> = {};
+    private keyDownState: Record<string, boolean> = {};
+    private keyIsRunning: Record<string, boolean> = {};
+    private isRunMode: boolean = false;
+    private lastRunTriggerTime: number = 0;
+    private readonly runPersistMs: number = 200;
     //@property({ type: Number, min: 0.1, max: 10, step: 0.1 })
     set stepUpSpeed(value: number) {
         this._stepUpSpeed = value;
@@ -45,6 +55,9 @@ export class PersonScript extends Laya.Script {
     get stepDownSpeed(): number {
         return this._stepDownSpeed;
     }
+    //@property({ type: Number, min: -0.2, max: 0.2, step: 0.005, description: "角色脚底相对于地面的额外高度调整" })
+    public groundOffsetAdjustment: number = 0.1;
+    private moveAni: Laya.Animator;
 
     //组件被激活后执行，此时所有节点和组件均已创建完毕，此方法只执行一次
     //onAwake(): void {}
@@ -66,6 +79,7 @@ export class PersonScript extends Laya.Script {
         this.ikcom = ikcom;
 
         this.animator = node.getComponent(Laya.Animator);
+        this.moveAni = this.owner.parent.getComponent(Laya.Animator);
         this.scene3D = this.owner.scene as Laya.Scene3D;
 
         // 保存脚部的初始旋转（用于补偿初始角度）
@@ -75,6 +89,8 @@ export class PersonScript extends Laya.Script {
         if (this.leftToeBase) {
             this.leftFootInitialRotation = this.leftToeBase.transform.rotation.clone();
         }
+
+        this.computePivotToFootOffset();
 
         // 初始化调试线条渲染器（用于可视化法线）
         //this.initDebugRenderer();
@@ -115,6 +131,9 @@ export class PersonScript extends Laya.Script {
         if (!this.rightChain) return this._rightBlendWeight;
         return this.rightChain.blendWeight;
     }
+    onLateUpdate(): void {
+
+    }
 
     //手动调用节点销毁时执行
     //onDestroy(): void {}
@@ -131,32 +150,65 @@ export class PersonScript extends Laya.Script {
         let currentDirection = 0;
         const deltaTime = Math.max(Laya.timer.delta / 1000, 1 / 1000);
 
-        if (Laya.InputManager.hasKeyDown("a")) {
-            playName = "walk";
+        const now = Laya.timer.currTimer;
+        const isKeyADown = Laya.InputManager.hasKeyDown("a");
+        const isKeyDDown = Laya.InputManager.hasKeyDown("d");
+
+        this.updateRunStateForKey("a", isKeyADown, now);
+        this.updateRunStateForKey("d", isKeyDDown, now);
+
+        if (isKeyADown) {
             currentDirection = -1; // 左
-        } else if (Laya.InputManager.hasKeyDown("d")) {
-            playName = "walk";
+        } else if (isKeyDDown) {
             currentDirection = 1; // 右
         }
 
+        const hasMovementInput = isKeyADown || isKeyDDown;
+        if (!hasMovementInput && this.isRunMode && now - this.lastRunTriggerTime > this.runPersistMs) {
+            this.isRunMode = false;
+        } else if (hasMovementInput && this.isRunMode) {
+            this.lastRunTriggerTime = now;
+        }
+
+        let isRunning = false;
+        if (currentDirection !== 0) {
+            const activeKey = currentDirection === -1 ? "a" : "d";
+            if (this.keyIsRunning[activeKey]) {
+                this.isRunMode = true;
+                this.lastRunTriggerTime = now;
+            }
+            isRunning = this.isRunMode;
+            playName = isRunning ? "run" : "walk";
+        }
+
         // 只在方向改变时旋转
-        if (currentDirection !== this.lastDirection) {
+        if (currentDirection !== this.lastDirection && currentDirection !== 0) {
+            const p1 = this.owner.parent as Laya.Sprite3D;
+            const p2 = p1.parent as Laya.Sprite3D;
+            const srcZ = p1.transform.localPosition.z;
+            p1.transform.localPosition.z = 0;
+            p2.transform.localPosition.z += srcZ * this.lastDirection;
+            p1.transform.localPosition = p1.transform.localPosition;
+            p2.transform.localPosition = p2.transform.localPosition;
+            this.moveAni.play(playName);
+
             if (currentDirection === -1) {
-                this.owner.transform.localRotationEuler = new Laya.Vector3(0, -180, 0);
+                p2.transform.localRotationEuler = new Laya.Vector3(0, -180, 0);
             } else if (currentDirection === 1) {
-                this.owner.transform.localRotationEuler = new Laya.Vector3(0, 0, 0);
+                p2.transform.localRotationEuler = new Laya.Vector3(0, 0, 0);
             }
             this.lastDirection = currentDirection;
         }
 
-        if (playName === "walk" && currentDirection !== 0) {
-            this.moveForward(deltaTime);
-        }
-
         this.updateGrounding(deltaTime);
+
+        if (!this.pivotOffsetInitialized && this.isGrounded) {
+            this.computePivotToFootOffset();
+        }
 
         if (this.animator.getControllerLayer(0).getCurrentPlayState().animatorState.name !== playName) {
             this.animator.play(playName);
+            this.moveAni.play(playName);
         }
 
         // 重置调试线条索引（每帧重新开始）
@@ -222,9 +274,60 @@ export class PersonScript extends Laya.Script {
      * 沿角色前进方向移动
      * @param deltaTime 帧间隔秒
      */
-    private moveForward(deltaTime: number): void {
-        const displacement = new Laya.Vector3(0, 0, this.moveSpeed * deltaTime);
+    private moveForward(deltaTime: number, speedMultiplier: number = 1): void {
+        const displacement = new Laya.Vector3(0, 0, this.moveSpeed * speedMultiplier * deltaTime);
         this.owner.transform.translate(displacement, true);
+    }
+
+    private updateRunStateForKey(key: string, isDown: boolean, now: number): void {
+        const wasDown = !!this.keyDownState[key];
+
+        if (isDown && !wasDown) {
+            const lastTime = this.keyLastDownTime[key] ?? Number.NEGATIVE_INFINITY;
+            if (now - lastTime <= this.doubleTapThresholdMs) {
+                this.keyIsRunning[key] = true;
+                this.isRunMode = true;
+                this.lastRunTriggerTime = now;
+            }
+            this.keyLastDownTime[key] = now;
+        } else if (!isDown && wasDown) {
+            this.keyIsRunning[key] = false;
+        }
+
+        if (!isDown) {
+            this.keyLastDownTime[key] = this.keyLastDownTime[key] ?? Number.NEGATIVE_INFINITY;
+        }
+
+        this.keyDownState[key] = isDown;
+    }
+
+    private computePivotToFootOffset(): void {
+        if (!this.rightToeBase && !this.leftToeBase) {
+            return;
+        }
+        const pivotHeight = this.owner.transform.position.y;
+        const rightFootHeight = this.rightToeBase ? this.rightToeBase.transform.position.y : Number.POSITIVE_INFINITY;
+        const leftFootHeight = this.leftToeBase ? this.leftToeBase.transform.position.y : Number.POSITIVE_INFINITY;
+        const minFootHeight = Math.min(rightFootHeight, leftFootHeight);
+        if (!isFinite(minFootHeight)) {
+            return;
+        }
+        const rawOffset = pivotHeight - minFootHeight;
+        this.pivotToFootOffset = rawOffset;
+        this.pivotOffsetInitialized = true;
+    }
+
+    private getPivotOffset(): number {
+        if (!this.pivotOffsetInitialized) {
+            this.computePivotToFootOffset();
+        }
+        return this.pivotOffsetInitialized ? this.pivotToFootOffset : 0;
+    }
+
+    private getPivotOffsetWithAdjustment(): number {
+        const baseOffset = this.getPivotOffset();
+        const groundedMultiplier = this.isGrounded ? 1 : 0.5;
+        return baseOffset + this.groundOffsetAdjustment * groundedMultiplier;
     }
 
     /**
@@ -254,16 +357,17 @@ export class PersonScript extends Laya.Script {
                 this.verticalVelocity = 0;
             }
             this.isGrounded = true;
-            let targetY = groundY;
+            const pivotOffset = this.getPivotOffsetWithAdjustment();
+            let targetY = groundY + pivotOffset;
             if (groundY > currentY) {
                 const riseDistance = this.stepUpSpeed * deltaTime;
-                targetY = Math.min(currentY + riseDistance, groundY);
+                targetY = Math.min(currentY + riseDistance, groundY + pivotOffset);
             } else if (groundY < currentY) {
                 const dropDistance = this._stepDownSpeed * deltaTime;
                 const maxDrop = currentY - dropDistance;
                 // 只有在台阶高度差在可控范围内时才平滑下降
                 if (currentY - groundY <= this.groundCheckHeight + this.groundCheckDistance) {
-                    targetY = Math.max(maxDrop, groundY);
+                    targetY = Math.max(maxDrop, groundY + pivotOffset);
                     this.verticalVelocity = 0;
                 }
             }

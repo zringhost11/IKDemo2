@@ -5,9 +5,6 @@
     "laya.physics3D": true,
     "laya.ik": true
   },
-  "addons": {
-    "laya.ui": "ui2"
-  },
   "splash": {
     "fit": "center"
   }

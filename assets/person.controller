@@ -21,7 +21,7 @@
           "cycleOffset": 0,
           "clipEnd": 1,
           "clip": {
-            "_$uuid": "fc0c61ca-8cb5-491d-bed7-6f116d5cd0b5"
+            "_$uuid": "3aa00497-f382-4493-b698-1de1cbed4fd8"
           },
           "soloTransitions": [],
           "scripts": null,
@@ -57,8 +57,8 @@
           "clipEnd": 1
         },
         {
-          "x": 306,
-          "y": 399,
+          "x": 376,
+          "y": 335,
           "loopState": 0,
           "_isLooping": 1,
           "id": "1",
@@ -69,6 +69,19 @@
             "_$uuid": "8f2a4792-cef2-46d1-89b1-7052d26a8b16"
           },
           "soloTransitions": []
+        },
+        {
+          "x": 645,
+          "y": 263,
+          "loopState": 0,
+          "_isLooping": 0,
+          "id": "2",
+          "name": "run",
+          "speed": 1,
+          "clipEnd": 1,
+          "clip": {
+            "_$uuid": "e08fa99f-5ea0-411e-8ff4-d7c6d8a92a40"
+          }
         }
       ],
       "defaultStateName": "Layer0"
