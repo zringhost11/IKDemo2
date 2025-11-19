@@ -66,7 +66,7 @@
           "speed": 1,
           "clipEnd": 1,
           "clip": {
-            "_$uuid": "8f2a4792-cef2-46d1-89b1-7052d26a8b16"
+            "_$uuid": "fee8a55e-4d09-4834-8b80-c0b10a627d14@lani0"
           },
           "soloTransitions": []
         },
@@ -84,7 +84,10 @@
           }
         }
       ],
-      "defaultStateName": "Layer0"
+      "defaultStateName": "Layer0",
+      "stageX": 52.38505747126437,
+      "stageY": 99.16497856586774,
+      "stageScale": 0.7614942528735632
     }
   ],
   "sleep": false,

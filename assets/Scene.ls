@@ -96,6 +96,7 @@
                 "g": 0.6,
                 "b": 0.6
               },
+              "shadowMode": 2,
               "strength": 1,
               "angle": 0.526,
               "maxBounces": 1024
@@ -1002,269 +1003,271 @@
           ]
         },
         {
-          "_$id": "uxi44cgt",
+          "_$id": "ei6xsdzp",
           "_$type": "Sprite3D",
           "name": "人物",
           "transform": {
             "localPosition": {
               "_$type": "Vector3",
-              "z": -5.453709197709602
+              "z": -5.458611442227972
             }
           },
+          "_$comp": [
+            {
+              "_$type": "CharacterController",
+              "collisionGroup": 1,
+              "canCollideWith": -1,
+              "centerOffset": {
+                "_$type": "Vector3",
+                "y": 0.994
+              },
+              "stepHeight": 0.52
+            },
+            {
+              "_$type": "Animator",
+              "controller": {
+                "_$uuid": "09b24967-de80-4b2a-8599-92dbfa487f32",
+                "_$type": "AnimationController"
+              },
+              "controllerLayers": [
+                {
+                  "_$type": "AnimatorControllerLayer",
+                  "name": "Base Layer",
+                  "states": [
+                    {
+                      "_$type": "AnimatorState",
+                      "name": "run",
+                      "clipStart": 0,
+                      "clip": {
+                        "_$uuid": "2359ffd3-f79f-4751-b43b-3fca7b0ce778",
+                        "_$type": "AnimationClip"
+                      },
+                      "soloTransitions": []
+                    },
+                    {
+                      "_$type": "AnimatorState",
+                      "name": "walk",
+                      "clipStart": 0,
+                      "clip": {
+                        "_$uuid": "2359ffd3-f79f-4751-b43b-3fca7b0ce778",
+                        "_$type": "AnimationClip"
+                      },
+                      "soloTransitions": []
+                    },
+                    {
+                      "_$type": "AnimatorState",
+                      "name": "idle",
+                      "clipStart": 0,
+                      "clip": {
+                        "_$uuid": "6405bc37-7d29-4c59-94b6-1d61095270ff",
+                        "_$type": "AnimationClip"
+                      },
+                      "soloTransitions": []
+                    }
+                  ],
+                  "defaultStateName": "idle"
+                }
+              ]
+            }
+          ],
           "_$child": [
             {
-              "_$id": "oymgm3k6",
-              "_$type": "Sprite3D",
-              "name": "人物移动",
+              "_$id": "4v08fmbw",
+              "_$prefab": "4abb090f-b674-4519-ab91-33f1c53d54a4",
+              "name": "人物模型",
+              "active": true,
+              "layer": 0,
+              "transform": {
+                "localPosition": {
+                  "_$type": "Vector3",
+                  "y": -0.0032129972241818905,
+                  "z": 0.004902362823486328
+                },
+                "localRotation": {
+                  "_$type": "Quaternion"
+                },
+                "localScale": {
+                  "_$type": "Vector3",
+                  "x": 1,
+                  "y": 1,
+                  "z": 1
+                }
+              },
               "_$comp": [
                 {
-                  "_$type": "Animator",
+                  "_$override": "Animator",
                   "controller": {
-                    "_$uuid": "cc848054-1ddd-4cda-871f-67a8b3933fd9",
+                    "_$uuid": "0fb5fc95-d8e8-4e50-ac12-b6ac01804621",
                     "_$type": "AnimationController"
-                  },
-                  "controllerLayers": [
-                    {
-                      "_$type": "AnimatorControllerLayer",
-                      "name": "Base Layer",
-                      "blendingMode": 1,
-                      "states": [
-                        {
-                          "_$type": "AnimatorState",
-                          "name": "run",
-                          "clipStart": 0,
-                          "clip": {
-                            "_$uuid": "dc0f7131-dcfc-4c13-8de0-4cbf4ddeefe0",
-                            "_$type": "AnimationClip"
-                          },
-                          "soloTransitions": []
-                        },
-                        {
-                          "_$type": "AnimatorState",
-                          "name": "idle",
-                          "clipStart": 0,
-                          "clip": {
-                            "_$uuid": "578a799f-79af-494b-84a1-ec0d4925022d",
-                            "_$type": "AnimationClip"
-                          },
-                          "soloTransitions": []
-                        },
-                        {
-                          "_$type": "AnimatorState",
-                          "name": "walk",
-                          "clipStart": 0,
-                          "clip": {
-                            "_$uuid": "2e0da64e-592d-4fcd-b980-5c80d57ff061",
-                            "_$type": "AnimationClip"
-                          },
-                          "soloTransitions": []
-                        }
-                      ],
-                      "defaultStateName": "idle"
-                    }
-                  ]
-                }
-              ],
-              "_$child": [
+                  }
+                },
                 {
-                  "_$id": "4v08fmbw",
-                  "_$prefab": "4abb090f-b674-4519-ab91-33f1c53d54a4",
-                  "name": "人物模型",
-                  "active": true,
-                  "layer": 0,
-                  "transform": {
-                    "localPosition": {
-                      "_$type": "Vector3"
-                    },
-                    "localRotation": {
-                      "_$type": "Quaternion"
-                    },
-                    "localScale": {
-                      "_$type": "Vector3",
-                      "x": 1,
-                      "y": 1,
-                      "z": 1
-                    }
-                  },
-                  "_$comp": [
+                  "_$type": "IK_Comp",
+                  "chainDatas": [
                     {
-                      "_$override": "Animator",
-                      "controller": {
-                        "_$uuid": "0fb5fc95-d8e8-4e50-ac12-b6ac01804621",
-                        "_$type": "AnimationController"
-                      }
-                    },
-                    {
-                      "_$type": "11188e86-7135-4043-a96c-35d2a114a236",
-                      "scriptPath": "../src/PersonScript.ts",
-                      "leftBlendWeight": 1,
-                      "rightBlendWeight": 1
-                    },
-                    {
-                      "_$type": "IK_Comp",
-                      "chainDatas": [
+                      "_$type": "IK_ChainData",
+                      "name": "right",
+                      "end": {
+                        "_$ref": "xmll4e7t"
+                      },
+                      "root": {
+                        "_$ref": [
+                          "4v08fmbw",
+                          "#164"
+                        ]
+                      },
+                      "bones": [
                         {
-                          "_$type": "IK_ChainData",
-                          "name": "right",
-                          "end": {
+                          "_$type": "BoneData",
+                          "data": {
                             "_$ref": "xmll4e7t"
-                          },
-                          "root": {
+                          }
+                        },
+                        {
+                          "_$type": "BoneData",
+                          "data": {
+                            "_$ref": [
+                              "4v08fmbw",
+                              "#166"
+                            ]
+                          }
+                        },
+                        {
+                          "_$type": "BoneData",
+                          "data": {
+                            "_$ref": [
+                              "4v08fmbw",
+                              "#165"
+                            ]
+                          }
+                        },
+                        {
+                          "_$type": "BoneData",
+                          "data": {
                             "_$ref": [
                               "4v08fmbw",
                               "#164"
                             ]
-                          },
-                          "bones": [
-                            {
-                              "_$type": "BoneData",
-                              "data": {
-                                "_$ref": "xmll4e7t"
-                              }
-                            },
-                            {
-                              "_$type": "BoneData",
-                              "data": {
-                                "_$ref": [
-                                  "4v08fmbw",
-                                  "#166"
-                                ]
-                              }
-                            },
-                            {
-                              "_$type": "BoneData",
-                              "data": {
-                                "_$ref": [
-                                  "4v08fmbw",
-                                  "#165"
-                                ]
-                              }
-                            },
-                            {
-                              "_$type": "BoneData",
-                              "data": {
-                                "_$ref": [
-                                  "4v08fmbw",
-                                  "#164"
-                                ]
-                              }
-                            }
-                          ],
-                          "alignTarget": "y",
-                          "enable": true
+                          }
+                        }
+                      ],
+                      "alignTarget": "y"
+                    },
+                    {
+                      "_$type": "IK_ChainData",
+                      "name": "left",
+                      "end": {
+                        "_$ref": "syks84p4"
+                      },
+                      "root": {
+                        "_$ref": [
+                          "4v08fmbw",
+                          "#169"
+                        ]
+                      },
+                      "bones": [
+                        {
+                          "_$type": "BoneData",
+                          "data": {
+                            "_$ref": "syks84p4"
+                          }
                         },
                         {
-                          "_$type": "IK_ChainData",
-                          "name": "left",
-                          "end": {
-                            "_$ref": "syks84p4"
-                          },
-                          "root": {
+                          "_$type": "BoneData",
+                          "data": {
+                            "_$ref": [
+                              "4v08fmbw",
+                              "#171"
+                            ]
+                          }
+                        },
+                        {
+                          "_$type": "BoneData",
+                          "data": {
+                            "_$ref": [
+                              "4v08fmbw",
+                              "#170"
+                            ]
+                          }
+                        },
+                        {
+                          "_$type": "BoneData",
+                          "data": {
                             "_$ref": [
                               "4v08fmbw",
                               "#169"
                             ]
-                          },
-                          "bones": [
-                            {
-                              "_$type": "BoneData",
-                              "data": {
-                                "_$ref": "syks84p4"
-                              }
-                            },
-                            {
-                              "_$type": "BoneData",
-                              "data": {
-                                "_$ref": [
-                                  "4v08fmbw",
-                                  "#171"
-                                ]
-                              }
-                            },
-                            {
-                              "_$type": "BoneData",
-                              "data": {
-                                "_$ref": [
-                                  "4v08fmbw",
-                                  "#170"
-                                ]
-                              }
-                            },
-                            {
-                              "_$type": "BoneData",
-                              "data": {
-                                "_$ref": [
-                                  "4v08fmbw",
-                                  "#169"
-                                ]
-                              }
-                            }
-                          ],
-                          "alignTarget": "y",
-                          "enable": true
+                          }
                         }
                       ],
-                      "solverIteration": 50,
-                      "dirSolverIteration": 10,
-                      "dampingFactor": 0.623
+                      "alignTarget": "y"
                     }
                   ],
-                  "_$child": [
-                    {
-                      "_$id": "xmll4e7t",
-                      "_$parent": "#166",
-                      "_$type": "Sprite3D",
-                      "name": "RightFoot",
-                      "transform": {
-                        "localPosition": {
-                          "_$type": "Vector3",
-                          "x": -0.00017772536162397046,
-                          "y": 6.142579874639068,
-                          "z": -7.521937560110246
-                        },
-                        "localRotation": {
-                          "_$type": "Quaternion",
-                          "x": -1.1031212070015947e-7,
-                          "y": -0.4291034549832617,
-                          "z": -0.9032553486812578,
-                          "w": 3.392605328750297e-7
-                        },
-                        "localScale": {
-                          "_$type": "Vector3",
-                          "x": 1.0000000000002545,
-                          "y": 1.000000001016511,
-                          "z": 1.000000001016265
-                        }
-                      }
+                  "solverIteration": 50,
+                  "dirSolverIteration": 10,
+                  "dampingFactor": 0.623
+                },
+                {
+                  "_$type": "4670af2c-a27a-4892-bf7a-b953ed36bbce",
+                  "scriptPath": "../src/PersonScript2.ts",
+                  "leftBlendWeight": 1,
+                  "rightBlendWeight": 1
+                }
+              ],
+              "_$child": [
+                {
+                  "_$id": "xmll4e7t",
+                  "_$parent": "#166",
+                  "_$type": "Sprite3D",
+                  "name": "RightFoot",
+                  "transform": {
+                    "localPosition": {
+                      "_$type": "Vector3",
+                      "x": -0.0007244138424198354,
+                      "y": 6.148415970082624,
+                      "z": -7.520044499521475
                     },
-                    {
-                      "_$id": "syks84p4",
-                      "_$parent": "#171",
-                      "_$type": "Sprite3D",
-                      "name": "LeftFoot",
-                      "transform": {
-                        "localPosition": {
-                          "_$type": "Vector3",
-                          "x": -0.00000862990663108576,
-                          "y": 6.143370347625762,
-                          "z": -2.9722024974950045
-                        },
-                        "localRotation": {
-                          "_$type": "Quaternion",
-                          "x": -1.1478161741906856e-7,
-                          "y": -0.42910341527587414,
-                          "z": -0.9032553675447776,
-                          "w": 3.412529361312977e-7
-                        },
-                        "localScale": {
-                          "_$type": "Vector3",
-                          "x": 1.0000000000002591,
-                          "y": 1.0000000386711827,
-                          "z": 1.0000000386709307
-                        }
-                      }
+                    "localRotation": {
+                      "_$type": "Quaternion",
+                      "x": -1.1031212107659447e-7,
+                      "y": -0.4291034549832619,
+                      "z": -0.9032553486812578,
+                      "w": 3.392605328750298e-7
+                    },
+                    "localScale": {
+                      "_$type": "Vector3",
+                      "x": 1.0000000000002545,
+                      "y": 1.000000001016511,
+                      "z": 1.000000001016265
                     }
-                  ]
+                  }
+                },
+                {
+                  "_$id": "syks84p4",
+                  "_$parent": "#171",
+                  "_$type": "Sprite3D",
+                  "name": "LeftFoot",
+                  "transform": {
+                    "localPosition": {
+                      "_$type": "Vector3",
+                      "x": 0.0005342585247785081,
+                      "y": 6.147131892605785,
+                      "z": -2.9690637758442335
+                    },
+                    "localRotation": {
+                      "_$type": "Quaternion",
+                      "x": -1.1478161725253508e-7,
+                      "y": -0.429103415275874,
+                      "z": -0.9032553675447776,
+                      "w": 3.412529361174199e-7
+                    },
+                    "localScale": {
+                      "_$type": "Vector3",
+                      "x": 1.0000000000002591,
+                      "y": 1.0000000386711827,
+                      "z": 1.0000000386709307
+                    }
+                  }
                 }
               ]
             }
