@@ -19,20 +19,23 @@ export class IK_DebugSystem extends Laya.Script{
     //private color:string[]=['red','green','blue','#ffff00','#ff00ff','#ee95fdff']
     private config = [
         //0
-        {min:0,max:0.1,color:'red'},
+        {min:0,max:0.2,color:'red',skip:false},
         //1
         {min:0,max:100,color:'green'},
         //2
-        {min:0,max:6,color:'blue'},
+        {min:0,max:6,color:'blue',skip:false},
         //3
-        {min:0,max:0.01,color:'#ffff00'},
+        {min:0,max:0.01,color:'#ffff00',skip:true},
         //4
-        {min:0,max:1,color:'#ff00ff'},
+        {min:0,max:1,color:'#ff00ff',skip:true},
         //5
-        {min:0,max:1000,color:'#c7befdff'},
+        {min:0,max:1000,color:'#c7befdff',skip:true},
     ]
     override onUpdate(): void {
         let ikcomp = this.owner.getComponent(IK_Comp);
+        if(!ikcomp.enabled){
+            ikcomp = this.owner.getComponent(Laya.IK_Comp) as any as IK_Comp;
+        }
         let g = this.ui.graphics;
         g.clear();
         
@@ -50,8 +53,8 @@ export class IK_DebugSystem extends Laya.Script{
         datas.push([
             ikcomp.current_error,
             ikcomp.current_iteration,
-            0,//ikcomp.pole_rot,
-            0,//ikcomp.targetChange,
+            ikcomp.pole_rot,
+            ikcomp.targetChange,
             ikcomp.blendW,
         ]
         );
@@ -62,6 +65,8 @@ export class IK_DebugSystem extends Laya.Script{
             let curdata = datas[d];
             let lastdata = datas[d-1];
             for(let i=0,n=curdata.length;i<n;i++){
+                if(this.config[i].skip)
+                    continue;
                 let r1 = this.config[i].max-this.config[i].min;
                 let lv = lastdata[i];
                 let v1 = curdata[i];

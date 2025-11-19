@@ -31,13 +31,26 @@ export class IK_ChainBase{
     totalLength=0;
     blendWeight=1.0;
     maxError=0.04;
-    enableWSmooth=true;
+    private _weightSmooth=1;
     wSmoother:NumberSmooth;
 
     constructor(mgr:IK_Comp ){
         this._jointMgr = getJointMgr(mgr.owner as Sprite3D);
-        if(this.enableWSmooth){
-            this.wSmoother=new NumberSmooth(0.2)
+        if(this._weightSmooth){
+            this.wSmoother = new NumberSmooth(0.1);
+        }
+    }
+
+    get weightSmooth(){
+        return this._weightSmooth;
+    }
+
+    set weightSmooth(v:number){
+        this._weightSmooth=v;
+        if(v<1&&v>0){
+            this.wSmoother = new NumberSmooth(v);
+        }else{
+            this.wSmoother=null;
         }
     }
 

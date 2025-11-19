@@ -59,11 +59,14 @@ export class IK_ChainData{
 
     @property({type:Number,caption:"混合权重",default:1})
     blendWeight=1;
+    @property({type:Number,default:1,caption:"平滑权重"})
+    smoothBlendWeight=1
 
     @property({type:Boolean,default:true})
     enable=true
 
-    @property({type:Number,default:0.04})
-    maxError=0.04
+    @property({type:Number,default:0.001})
+    maxError=0.001
+
 
 }

@@ -98,12 +98,6 @@
           "_$comp": [
             {
               "_$type": "DirectionLightCom",
-              "color": {
-                "_$type": "Color",
-                "r": 0.6,
-                "g": 0.6,
-                "b": 0.6
-              },
               "shadowMode": 2,
               "strength": 1,
               "angle": 0.526,
@@ -1166,6 +1160,9 @@
                         }
                       ],
                       "alignTarget": "y",
+                      "PoleTarget": {
+                        "_$ref": "e2qn3b99"
+                      },
                       "maxError": 0.001,
                       "blendWeight": 0,
                       "enable": false
@@ -1218,12 +1215,15 @@
                         }
                       ],
                       "alignTarget": "y",
+                      "PoleTarget": {
+                        "_$ref": "c2sng9uy"
+                      },
                       "maxError": 0.001
                     }
                   ],
-                  "solverIteration": 50,
-                  "dirSolverIteration": 10,
-                  "dampingFactor": 0.623
+                  "solverIteration": 43,
+                  "dirSolverIteration": 25,
+                  "dampingFactor": 0.911
                 },
                 {
                   "_$type": "45a75369-e319-4c4f-b08d-30558b0d1093",
@@ -1242,9 +1242,10 @@
                       "alignTarget": "y",
                       "target": null,
                       "enablePoleTarget": false,
-                      "PoleTarget": null,
-                      "jointCount": 4,
-                      "maxError": 0.001
+                      "PoleTarget": {
+                        "_$ref": "c2sng9uy"
+                      },
+                      "jointCount": 4
                     },
                     {
                       "_$type": "732f4274-ac43-492f-89c6-d519a49e8564",
@@ -1258,15 +1259,15 @@
                       "alignTarget": "y",
                       "target": null,
                       "enablePoleTarget": false,
-                      "PoleTarget": null,
-                      "jointCount": 4,
-                      "enable": false,
-                      "maxError": 0.001
+                      "PoleTarget": {
+                        "_$ref": "e2qn3b99"
+                      },
+                      "jointCount": 4
                     }
                   ],
                   "solverIteration": 23,
                   "dirSolverIteration": 10,
-                  "dampingFactor": 0.1,
+                  "dampingFactor": 0.972,
                   "showGizmos": true,
                   "显示约束": true,
                   "显约束轴": true,
@@ -1337,6 +1338,87 @@
                       "z": 1.0000000386709307
                     }
                   }
+                },
+                {
+                  "_$id": "c2sng9uy",
+                  "_$index": 3,
+                  "_$type": "Sprite3D",
+                  "name": "LeftPole",
+                  "transform": {
+                    "localPosition": {
+                      "_$type": "Vector3",
+                      "x": 0.10026916861534119,
+                      "y": 0.5322197079658508,
+                      "z": 0.5742688179016113
+                    },
+                    "localScale": {
+                      "_$type": "Vector3",
+                      "x": 0.10000000149011612,
+                      "y": 0.10000000149011612,
+                      "z": 0.10000000149011612
+                    }
+                  },
+                  "_$comp": [
+                    {
+                      "_$type": "MeshFilter",
+                      "sharedMesh": {
+                        "_$uuid": "6e013e32-fec7-4397-80d1-f918a07607be",
+                        "_$type": "Mesh"
+                      }
+                    },
+                    {
+                      "_$type": "MeshRenderer",
+                      "lightmapScaleOffset": {
+                        "_$type": "Vector4"
+                      },
+                      "sharedMaterials": [
+                        {
+                          "_$uuid": "6f90bbb0-bcb2-4311-8a9d-3d8277522098",
+                          "_$type": "Material"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "_$id": "e2qn3b99",
+                  "_$type": "Sprite3D",
+                  "name": "RightPole",
+                  "transform": {
+                    "localPosition": {
+                      "_$type": "Vector3",
+                      "x": -0.0638076514005661,
+                      "y": 0.520304799079895,
+                      "z": 0.6289610862731934
+                    },
+                    "localScale": {
+                      "_$type": "Vector3",
+                      "x": 0.10000000149011612,
+                      "y": 0.10000000149011612,
+                      "z": 0.10000000149011612
+                    }
+                  },
+                  "_$comp": [
+                    {
+                      "_$type": "MeshFilter",
+                      "sharedMesh": {
+                        "_$uuid": "6e013e32-fec7-4397-80d1-f918a07607be",
+                        "_$type": "Mesh"
+                      }
+                    },
+                    {
+                      "_$type": "MeshRenderer",
+                      "lightmapScaleOffset": {
+                        "_$type": "Vector4"
+                      },
+                      "sharedMaterials": [
+                        {
+                          "_$uuid": "6f90bbb0-bcb2-4311-8a9d-3d8277522098",
+                          "_$type": "Material"
+                        }
+                      ]
+                    }
+                  ]
                 }
               ]
             }

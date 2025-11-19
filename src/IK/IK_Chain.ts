@@ -42,8 +42,6 @@ export class IK_Chain extends IK_ChainBase{
         super(mgr);
         this.name = name;
         this.joints = [];
-        //debug
-        (window as any).ccc=this;
     }
 
     //所有的关节是否与目标点共线
@@ -80,7 +78,7 @@ export class IK_Chain extends IK_ChainBase{
         //目标
         if(this.target){
             //在target位置画一个十字
-            const pos = this.target.pos;
+            let pos = this.target.pos;
             this.target.getPose(tmpMat);
             ripMatScale(tmpMat);
             let e = tmpMat.elements;
@@ -99,12 +97,18 @@ export class IK_Chain extends IK_ChainBase{
             line.addLine(pos,end6,Color.BLUE,Color.BLUE);
         }
         if(this.endAlign!='no'){
-            let e = this.joints[this.joints.length-1].bone.transform.worldMatrix.elements;
-            let ori = new Vector3(e[12],e[13],e[14]);
-            let len = 53;
-            let end = new Vector3(ori.x+e[4]*len,ori.y+e[5]*len,ori.z+e[6]*len);
+            // let e = this.joints[this.joints.length-1].bone.transform.worldMatrix.elements;
+            // let ori = new Vector3(e[12],e[13],e[14]);
+            // let len = 53;
+            // let end = new Vector3(ori.x+e[4]*len,ori.y+e[5]*len,ori.z+e[6]*len);
             
-            //line.addLine(ori,end,Color.RED,Color.YELLOW);
+            // //line.addLine(ori,end,Color.RED,Color.YELLOW);
+            // let pos = this._dbgTarget;
+            // let mat = new Matrix4x4();
+            // mat.elements[12]=this._dbgTarget.x;
+            // mat.elements[13]=this._dbgTarget.y;
+            // mat.elements[14]=this._dbgTarget.z;
+            // //drawAxis(line,mat,0.1)
         }
         let joints = this.joints;
         for(let i=0,n=joints.length; i<n; i++){
@@ -145,10 +149,6 @@ export class IK_Chain extends IK_ChainBase{
     }
 
     private _firstGetParentInEnd = true;
-    private _lastTargetPos = new Vector3();
-    //debug
-    private tarsm =new Vec3Smooth(0.1)
-    //debug
     override solve(comp:IK_Comp){
         if(!this._target){
             return ;
@@ -158,7 +158,6 @@ export class IK_Chain extends IK_ChainBase{
 
         let joints = this.joints;
         let targetPos = this.target.pos.clone();
-
         //如果需要对齐的处理
         let alignQ:Quaternion=null;
         if(this._isEndAlign){
@@ -254,13 +253,7 @@ export class IK_Chain extends IK_ChainBase{
             this.lastQuat[i] = joints[i].rotationQuat.clone();
         }
 
-        //targetPos = this.tarsm.in(targetPos).clone();
-        let dd = new Vector3();
-        targetPos.vsub(this._lastTargetPos,dd);
-        comp.targetChange = dd.length();
-
-        solver.solve(comp,this,targetPos,this._isEndAlign);
-        targetPos.cloneTo(this._lastTargetPos);
+        let touched = solver.solve(comp,this,targetPos,this._isEndAlign);
 
         //美化旋转，根据骨骼方向简化旋转四元数
         for(let i=0,n=joints.length; i<n-1; i++){
@@ -281,7 +274,7 @@ export class IK_Chain extends IK_ChainBase{
 
 
         //根据 alignQ 更新一下末端的朝向
-        if(this._isEndAlign && alignQ ){
+        if(this._isEndAlign && alignQ){
             //计算dq。根据parent的旋转和parent的期望的旋转，计算一个dq，用来旋转parent，这样就会导致末端符合朝向要求
             let curParentQ = joints[joints.length-2].rotationQuat;
             let invParQ = new Quaternion();

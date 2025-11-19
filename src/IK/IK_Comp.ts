@@ -418,6 +418,9 @@ export class IK_Comp extends Laya.Script {
                     c.enable = data.enable;
                     c.blendWeight = data.blendWeight;
                     c.poleTarget = data.PoleTarget ? new IK_Target(data.PoleTarget) : null;
+                    if(data.smoothBlendWeight){
+                        c.weightSmooth = data.smoothBlendWeight;
+                    }
                     if(data.maxError) c.maxError = data.maxError;
                     if(!data.enablePoleTarget){
                         c.poleTarget = null;
