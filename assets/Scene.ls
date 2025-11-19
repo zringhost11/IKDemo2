@@ -1160,12 +1160,13 @@
                         }
                       ],
                       "alignTarget": "y",
+                      "enablePoleTarget": true,
                       "PoleTarget": {
                         "_$ref": "e2qn3b99"
                       },
                       "maxError": 0.001,
                       "blendWeight": 0,
-                      "enable": false
+                      "smoothBlendWeight": true
                     },
                     {
                       "_$type": "IK_ChainData",
@@ -1215,10 +1216,12 @@
                         }
                       ],
                       "alignTarget": "y",
+                      "enablePoleTarget": true,
                       "PoleTarget": {
                         "_$ref": "c2sng9uy"
                       },
-                      "maxError": 0.001
+                      "maxError": 0.001,
+                      "smoothBlendWeight": true
                     }
                   ],
                   "solverIteration": 43,
@@ -1282,6 +1285,13 @@
                   "showAxis": false,
                   "axisLength": 0.3,
                   "poseName": null
+                },
+                {
+                  "_$type": "038181e4-80c7-46a9-a3f5-7c080ae802f9",
+                  "scriptPath": "../src/IK/IK_DebugSystem.ts",
+                  "ui": {
+                    "_$ref": "d2rn23d7"
+                  }
                 }
               ],
               "_$child": [
@@ -1320,16 +1330,16 @@
                   "transform": {
                     "localPosition": {
                       "_$type": "Vector3",
-                      "x": 0.0005338710958486814,
-                      "y": 6.1471499234213525,
-                      "z": -2.969047998797066
+                      "x": 0.0005338710923048495,
+                      "y": 6.147186416203283,
+                      "z": -2.969017297503285
                     },
                     "localRotation": {
                       "_$type": "Quaternion",
-                      "x": -1.1478161725253507e-7,
+                      "x": -1.1478161725253509e-7,
                       "y": -0.429103415275874,
                       "z": -0.9032553675447776,
-                      "w": 3.4125293611741997e-7
+                      "w": 3.4125293611742e-7
                     },
                     "localScale": {
                       "_$type": "Vector3",
@@ -1449,6 +1459,15 @@
           }
         }
       ]
+    },
+    {
+      "_$id": "d2rn23d7",
+      "_$type": "Sprite",
+      "name": "Sprite",
+      "x": 417,
+      "y": 29,
+      "width": 783,
+      "height": 100
     }
   ]
 }
