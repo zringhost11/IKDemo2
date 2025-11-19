@@ -1,3 +1,10 @@
+// import { IK_Chain } from "./IK/IK_Chain";
+// import { IK_Comp } from "./IK/IK_Comp";
+
+const {IK_Comp} = Laya;
+type IK_Chain = Laya.IK_Chain;
+type IK_Comp = Laya.IK_Comp;
+
 const { regClass, property } = Laya;
 
 @regClass()
@@ -8,7 +15,7 @@ export class PersonScript extends Laya.Script {
     private lastDirection: number = 1; // 0: 无方向, -1: 左, 1: 右
     private rightToeBase: Laya.Sprite3D;
     private leftToeBase: Laya.Sprite3D;
-    private ikcom: Laya.IK_Comp;
+    private ikcom: IK_Comp;
     private scene3D: Laya.Scene3D;
     private pivotToFootOffset: number = 0;
     private pivotOffsetInitialized: boolean = false;
@@ -17,8 +24,8 @@ export class PersonScript extends Laya.Script {
     private debugLineRenderer: Laya.PixelLineRenderer;
     private debugCounter: number = 0; // 用于控制打印频率
     private debugLineIndex: number = 0; // 当前线条索引
-    private leftChain: Laya.IK_Chain;
-    private rightChain: Laya.IK_Chain;
+    private leftChain: IK_Chain;
+    private rightChain: IK_Chain;
 
     // 脚部的初始旋转（用于补偿初始角度）
     private rightFootInitialRotation: Laya.Quaternion;
@@ -72,8 +79,9 @@ export class PersonScript extends Laya.Script {
     onStart(): void {
         const node = this.owner;
         const rightToeBase = node.findChild("mixamorig:RightFoot");
-        const leftToeBase = node.findChild("mixamorig:LeftFoot");
-        const ikcom = node.getComponent(Laya.IK_Comp);
+        //const leftToeBase = node.findChild("mixamorig:LeftFoot");
+        const leftToeBase = node.findChild("LeftFoot");
+        const ikcom = node.getComponent(IK_Comp);
         this.rightToeBase = rightToeBase;
         this.leftToeBase = leftToeBase;
         this.ikcom = ikcom;
@@ -225,7 +233,7 @@ export class PersonScript extends Laya.Script {
      * @param chain IK 链
      * @param isRightFoot 是否为右脚（true=右脚红色系，false=左脚蓝色系）
      */
-    private updateFootIK(toeBase: Laya.Sprite3D, chain: Laya.IK_Chain, isRightFoot: boolean): void {
+    private updateFootIK(toeBase: Laya.Sprite3D, chain: IK_Chain, isRightFoot: boolean): void {
         if (!toeBase || !this.scene3D || !chain || !this.ikcom) {
             return;
         }

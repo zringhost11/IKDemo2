@@ -1,5 +1,13 @@
 const { regClass, property } = Laya;
 
+// import { IK_Chain } from "./IK/IK_Chain";
+// import { IK_Comp } from "./IK/IK_Comp";
+// import { IK_Target } from "./IK/IK_Target";
+
+const {IK_Comp,IK_Target} = Laya;
+type IK_Chain = Laya.IK_Chain;
+type IK_Comp = Laya.IK_Comp;
+
 @regClass()
 export class PersonScript2 extends Laya.Script {
     declare owner: Laya.Sprite3D;
@@ -7,11 +15,11 @@ export class PersonScript2 extends Laya.Script {
     private lastDirection: number = 1; // 0: 无方向, -1: 左, 1: 右
     private rightToeBase: Laya.Sprite3D;
     private leftToeBase: Laya.Sprite3D;
-    private ikcom: Laya.IK_Comp;
+    private ikcom: IK_Comp;
     private animator: Laya.Animator;
     private phyAni: Laya.Animator;
-    private leftChain: Laya.IK_Chain;
-    private rightChain: Laya.IK_Chain;
+    private leftChain: IK_Chain;
+    private rightChain: IK_Chain;
     private readonly doubleTapThresholdMs: number = 300;
     private keyLastDownTime: Record<string, number> = {};
     private keyDownState: Record<string, boolean> = {};
@@ -37,7 +45,7 @@ export class PersonScript2 extends Laya.Script {
         // const leftToeBase = node.findChild("mixamorig:LeftFoot") as Laya.Sprite3D;
         const rightToeBase = node.findChild("LeftFoot") as Laya.Sprite3D;
         const leftToeBase = node.findChild("RightFoot") as Laya.Sprite3D;
-        const ikcom = node.getComponent(Laya.IK_Comp);
+        const ikcom = node.getComponent(IK_Comp);
         this.scene3D = this.owner.scene as Laya.Scene3D;
         this.characterController = node.parent.getComponent(Laya.CharacterController);
         this.rightToeBase = rightToeBase;
@@ -149,7 +157,7 @@ export class PersonScript2 extends Laya.Script {
   * @param chain IK 链
   * @param isRightFoot 是否为右脚（true=右脚红色系，false=左脚蓝色系）
   */
-    private updateFootIK(toeBase: Laya.Sprite3D, chain: Laya.IK_Chain, isRightFoot: boolean): void {
+    private updateFootIK(toeBase: Laya.Sprite3D, chain: IK_Chain, isRightFoot: boolean): void {
         if (!toeBase || !this.scene3D || !chain || !this.ikcom) {
             return;
         }
@@ -185,7 +193,7 @@ export class PersonScript2 extends Laya.Script {
             // IK Target 方向：直接使用地面法线（垂直于地面）
             const targetDirection = groundNormal.clone();
 
-            this.ikcom.setTarget(chain, new Laya.IK_Target(hitPoint, targetDirection));
+            this.ikcom.setTarget(chain, new IK_Target(hitPoint, targetDirection));
 
             // 可视化：绘制碰撞点和 IK 方向
             //this.drawIKDebugLines(hitPoint, targetDirection);

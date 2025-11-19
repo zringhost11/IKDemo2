@@ -56,7 +56,6 @@
               "w": -0.6893135140187383
             }
           },
-          "orthographic": true,
           "orthographicVerticalSize": 5.119,
           "nearPlane": 0.3,
           "farPlane": 1000,
@@ -66,7 +65,16 @@
             "r": 0.3921,
             "g": 0.5843,
             "b": 0.9294
-          }
+          },
+          "_$comp": [
+            {
+              "_$type": "d2c646ee-92ed-45ce-857b-6b03e3a9c5a9",
+              "scriptPath": "../src/ctrl/CameraController1.ts",
+              "startTarget": {
+                "_$ref": "ei6xsdzp"
+              }
+            }
+          ]
         },
         {
           "_$id": "6ni3p096l5",
@@ -1103,6 +1111,7 @@
                 },
                 {
                   "_$type": "IK_Comp",
+                  "enabled": false,
                   "chainDatas": [
                     {
                       "_$type": "IK_ChainData",
@@ -1151,7 +1160,8 @@
                           }
                         }
                       ],
-                      "alignTarget": "y"
+                      "alignTarget": "y",
+                      "maxError": 0.001
                     },
                     {
                       "_$type": "IK_ChainData",
@@ -1200,7 +1210,8 @@
                           }
                         }
                       ],
-                      "alignTarget": "y"
+                      "alignTarget": "y",
+                      "maxError": 0.001
                     }
                   ],
                   "solverIteration": 50,
@@ -1212,6 +1223,61 @@
                   "scriptPath": "../src/PersonScript2.ts",
                   "leftBlendWeight": 1,
                   "rightBlendWeight": 1
+                },
+                {
+                  "_$type": "45a75369-e319-4c4f-b08d-30558b0d1093",
+                  "scriptPath": "../src/IK/IK_Comp.ts",
+                  "chainDatas": [
+                    {
+                      "_$type": "732f4274-ac43-492f-89c6-d519a49e8564",
+                      "name": "left",
+                      "end": {
+                        "_$ref": "syks84p4"
+                      },
+                      "root": null,
+                      "bones": null,
+                      "fixedEnd": false,
+                      "alignTarget": "y",
+                      "target": null,
+                      "enablePoleTarget": false,
+                      "PoleTarget": null,
+                      "jointCount": 4,
+                      "maxError": 0.001
+                    },
+                    {
+                      "_$type": "732f4274-ac43-492f-89c6-d519a49e8564",
+                      "name": "right",
+                      "end": {
+                        "_$ref": "xmll4e7t"
+                      },
+                      "root": null,
+                      "bones": null,
+                      "fixedEnd": false,
+                      "alignTarget": "y",
+                      "target": null,
+                      "enablePoleTarget": false,
+                      "PoleTarget": null,
+                      "jointCount": 4,
+                      "maxError": 0.001
+                    }
+                  ],
+                  "solverIteration": 23,
+                  "dirSolverIteration": 10,
+                  "dampingFactor": 0.1,
+                  "showGizmos": false,
+                  "显示约束": true,
+                  "显约束轴": true,
+                  "RunInEditor": false,
+                  "useAnimLayer": false,
+                  "showBone": true,
+                  "pickBone": false,
+                  "pickHideBone": false,
+                  "hideBone": false,
+                  "enableControl": false,
+                  "controlWithConstraint": false,
+                  "showAxis": false,
+                  "axisLength": 0.3,
+                  "poseName": null
                 }
               ],
               "_$child": [
@@ -1223,16 +1289,16 @@
                   "transform": {
                     "localPosition": {
                       "_$type": "Vector3",
-                      "x": -0.0007244138424198354,
-                      "y": 6.148415970082624,
-                      "z": -7.520044499521475
+                      "x": -0.0007242350558929189,
+                      "y": 6.148420061335571,
+                      "z": -7.520056904021089
                     },
                     "localRotation": {
                       "_$type": "Quaternion",
-                      "x": -1.1031212107659447e-7,
-                      "y": -0.4291034549832619,
-                      "z": -0.9032553486812578,
-                      "w": 3.392605328750298e-7
+                      "x": -1.1031212107659445e-7,
+                      "y": -0.429103454983262,
+                      "z": -0.9032553486812579,
+                      "w": 3.3926053287502983e-7
                     },
                     "localScale": {
                       "_$type": "Vector3",
@@ -1250,16 +1316,16 @@
                   "transform": {
                     "localPosition": {
                       "_$type": "Vector3",
-                      "x": 0.0005342585247785081,
-                      "y": 6.147131892605785,
-                      "z": -2.9690637758442335
+                      "x": 0.0005338710958486814,
+                      "y": 6.1471499234213525,
+                      "z": -2.969047998797066
                     },
                     "localRotation": {
                       "_$type": "Quaternion",
-                      "x": -1.1478161725253508e-7,
+                      "x": -1.1478161725253507e-7,
                       "y": -0.429103415275874,
                       "z": -0.9032553675447776,
-                      "w": 3.412529361174199e-7
+                      "w": 3.4125293611741997e-7
                     },
                     "localScale": {
                       "_$type": "Vector3",
