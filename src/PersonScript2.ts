@@ -43,8 +43,8 @@ export class PersonScript2 extends Laya.Script {
         const node = this.owner;
         // const rightToeBase = node.findChild("mixamorig:RightFoot") as Laya.Sprite3D;
         // const leftToeBase = node.findChild("mixamorig:LeftFoot") as Laya.Sprite3D;
-        const rightToeBase = node.findChild("LeftFoot") as Laya.Sprite3D;
-        const leftToeBase = node.findChild("RightFoot") as Laya.Sprite3D;
+        const rightToeBase = node.findChild("RightFoot") as Laya.Sprite3D;
+        const leftToeBase = node.findChild("LeftFoot") as Laya.Sprite3D;
         const ikcom = node.getComponent(IK_Comp);
         this.scene3D = this.owner.scene as Laya.Scene3D;
         this.characterController = node.parent.getComponent(Laya.CharacterController);
