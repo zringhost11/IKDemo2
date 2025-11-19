@@ -1110,8 +1110,13 @@
                   }
                 },
                 {
+                  "_$type": "4670af2c-a27a-4892-bf7a-b953ed36bbce",
+                  "scriptPath": "../src/PersonScript2.ts",
+                  "leftBlendWeight": 1,
+                  "rightBlendWeight": 1
+                },
+                {
                   "_$type": "IK_Comp",
-                  "enabled": false,
                   "chainDatas": [
                     {
                       "_$type": "IK_ChainData",
@@ -1161,7 +1166,9 @@
                         }
                       ],
                       "alignTarget": "y",
-                      "maxError": 0.001
+                      "maxError": 0.001,
+                      "blendWeight": 0,
+                      "enable": false
                     },
                     {
                       "_$type": "IK_ChainData",
@@ -1219,13 +1226,8 @@
                   "dampingFactor": 0.623
                 },
                 {
-                  "_$type": "4670af2c-a27a-4892-bf7a-b953ed36bbce",
-                  "scriptPath": "../src/PersonScript2.ts",
-                  "leftBlendWeight": 1,
-                  "rightBlendWeight": 1
-                },
-                {
                   "_$type": "45a75369-e319-4c4f-b08d-30558b0d1093",
+                  "enabled": false,
                   "scriptPath": "../src/IK/IK_Comp.ts",
                   "chainDatas": [
                     {
@@ -1258,18 +1260,19 @@
                       "enablePoleTarget": false,
                       "PoleTarget": null,
                       "jointCount": 4,
+                      "enable": false,
                       "maxError": 0.001
                     }
                   ],
                   "solverIteration": 23,
                   "dirSolverIteration": 10,
                   "dampingFactor": 0.1,
-                  "showGizmos": false,
+                  "showGizmos": true,
                   "显示约束": true,
                   "显约束轴": true,
                   "RunInEditor": false,
                   "useAnimLayer": false,
-                  "showBone": true,
+                  "showBone": false,
                   "pickBone": false,
                   "pickHideBone": false,
                   "hideBone": false,
@@ -1295,10 +1298,10 @@
                     },
                     "localRotation": {
                       "_$type": "Quaternion",
-                      "x": -1.1031212107659445e-7,
-                      "y": -0.429103454983262,
-                      "z": -0.9032553486812579,
-                      "w": 3.3926053287502983e-7
+                      "x": -1.1031212107659472e-7,
+                      "y": -0.42910345498326224,
+                      "z": -0.9032553486812577,
+                      "w": 3.3926053287503014e-7
                     },
                     "localScale": {
                       "_$type": "Vector3",
