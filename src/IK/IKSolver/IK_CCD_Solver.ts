@@ -8,24 +8,33 @@ const { Quaternion, Vector3 } = Laya
 type Vector3 = Laya.Vector3
 type Quaternion = Laya.Quaternion
 
-// --- 静态缓存变量 (避免 GC) ---
-const tmpVec3_1 = new Vector3();
-const tmpVec3_2 = new Vector3();
-const tmpVec3_3 = new Vector3();
-const tmpVec3_4 = new Vector3();
-const tmpVec3_5 = new Vector3();
-
-const tmpQuat_1 = new Quaternion();
-const tmpQuat_2 = new Quaternion();
-
 export class IK_CCDSolver implements IK_ISolver {
     dampingFactor: number = 0.1; 
     maxIterations: number;
     poleTarget: IK_Target = null;
 
-    // 调试/状态变量
-    private _targetPos = new Vector3();
-    private _currentEndPos = new Vector3();
+    // ==========================================
+    // 核心状态变量 (State)
+    // ==========================================
+    private _targetPos = new Vector3();      // 缓存的目标位置
+    private _currentEndPos = new Vector3();  // 缓存的末端位置（用于数学计算追踪）
+
+    // ==========================================
+    // 计算用临时变量 (Working Memory)
+    // 使用成员变量代替 new，避免 GC，同时避免全局污染
+    // ==========================================
+    
+    // 1. 核心算法专用变量 (语义化命名)
+    private _jointToEndVec = new Vector3();    // 关节->末端 向量
+    private _jointToTargetVec = new Vector3(); // 关节->目标 向量
+    private _pivotPos = new Vector3();         // 当前关节位置 (旋转轴心)
+    private _rotationDelta = new Quaternion(); // 计算出的旋转量
+
+    // 2. 通用计算变量 (用于中间计算，随用随弃)
+    private _calcVecA = new Vector3();
+    private _calcVecB = new Vector3();
+    private _calcVecC = new Vector3();
+    private _calcQuat = new Quaternion();
 
     constructor(maxIterations: number = 1) {
         this.maxIterations = maxIterations;
@@ -39,22 +48,19 @@ export class IK_CCDSolver implements IK_ISolver {
         if (joints.length < 2) return false;
 
         // 1. 准备数据
-        // 确定末端关节索引：endOffline 为 true 时，倒数第二个是实际末端
         const endId = endOffline ? joints.length - 2 : joints.length - 1;
         const endEffector = joints[endId];
         const basePos = joints[0].position;
         
-        // 复制目标位置到本地缓存
+        // 缓存目标位置
         target.cloneTo(this._targetPos);
         
         // 2. 检查是否可达 (Reachability)
-        // 如果不可达，直接拉直链条指向目标，不再进行迭代
         const totalLength = this.calculateTotalLength(joints, endId);
         const distBaseToTarget = Vector3.distance(basePos, this._targetPos);
         
         if (distBaseToTarget > totalLength) {
             this.handleUnreachable(joints, endId, basePos, this._targetPos);
-            // 设置结果数据供外部读取
             comp.current_iteration = 1;
             comp.current_error = distBaseToTarget - totalLength;
             return false;
@@ -69,13 +75,12 @@ export class IK_CCDSolver implements IK_ISolver {
         endEffector.position.cloneTo(this._currentEndPos);
 
         while (iteration < this.maxIterations) {
-            // 3.1 执行单次反向遍历 (从末端到根)
+            // 3.1 执行单次反向遍历
             touched = this.solveOneIteration(joints, endId, this._targetPos, epsilonSq);
             
-            // 如果已经接触目标，提前退出
             if (touched) break;
 
-            // 3.2 检查误差是否满足要求
+            // 3.2 检查误差
             const currentDistSq = Vector3.distanceSquared(this._currentEndPos, this._targetPos);
             if (currentDistSq < epsilonSq) {
                 touched = true;
@@ -84,21 +89,17 @@ export class IK_CCDSolver implements IK_ISolver {
 
             iteration++;
             
-            // 3.3 如果还有下一轮迭代，必须进行 FK (Forward Kinematics) 更新
-            // 之前只更新末端位置，但下一轮迭代需要正确的中间关节位置作为 Pivot
+            // 3.3 FK 更新：为下一轮迭代准备准确的关节位置
             if (iteration < this.maxIterations) {
                 this.updateAllJointPositions(joints, endId);
-                // FK 后重新获取一下最准确的末端位置
                 endEffector.position.cloneTo(this._currentEndPos);
             }
         }
 
         // 4. 最终位置同步
-        // 确保最后一次计算的旋转应用到了关节位置上 (给外部渲染用)
         this.updateAllJointPositions(joints, endId);
 
-        // 5. 极向量约束 (Pole Vector)
-        // 在主 IK 求解后应用，调整膝盖/手肘朝向
+        // 5. 极向量约束
         if (this.poleTarget && joints.length > 2) {
             this.solvePoleVector(comp, chain, joints, endId, basePos);
         }
@@ -112,35 +113,33 @@ export class IK_CCDSolver implements IK_ISolver {
 
     /**
      * 单次 CCD 迭代
-     * 从末端的前一个关节开始，逐个往回调整旋转
      */
     private solveOneIteration(joints: any[], endId: number, targetPos: Vector3, epsilonSq: number): boolean {
         const currentEndPos = this._currentEndPos;
-        const jointToEnd = tmpVec3_1;
-        const jointToTarget = tmpVec3_2;
-        const rotation = tmpQuat_1;
-        const pivot = tmpVec3_3;
+        
+        // 使用类成员变量，清晰明了
+        const jointToEnd = this._jointToEndVec;
+        const jointToTarget = this._jointToTargetVec;
+        const rotation = this._rotationDelta;
+        const pivot = this._pivotPos;
 
-        // 从倒数第二个关节开始，一直遍历到根节点 (0)
         for (let i = endId - 1; i >= 0; i--) {
             const joint = joints[i];
             if (joint.fixed) continue;
 
-            // 1. 获取当前关节位置 (旋转轴心)
+            // 1. 获取 Pivot
             joint.position.cloneTo(pivot);
 
-            // 2. 检查末端是否已经足够接近目标
+            // 2. 距离检测
             if (Vector3.distanceSquared(currentEndPos, targetPos) < epsilonSq) {
                 return true;
             }
 
             // 3. 构建向量
-            // 向量 A: 关节 -> 当前末端位置
-            currentEndPos.vsub(pivot, jointToEnd);
-            // 向量 B: 关节 -> 目标位置
-            targetPos.vsub(pivot, jointToTarget);
+            currentEndPos.vsub(pivot, jointToEnd); // Vector A
+            targetPos.vsub(pivot, jointToTarget);  // Vector B
 
-            // 4. 稳定性检查：如果向量太短，无法计算方向，跳过
+            // 4. 稳定性检查
             if (jointToEnd.lengthSquared() < 1e-6 || jointToTarget.lengthSquared() < 1e-6) {
                 continue;
             }
@@ -148,92 +147,63 @@ export class IK_CCDSolver implements IK_ISolver {
             jointToEnd.normalize();
             jointToTarget.normalize();
 
-            // 5. 计算旋转 (From A to B)
+            // 5. 计算旋转
             quaternionFromTo(jointToEnd, jointToTarget, rotation);
 
-            // 6. 应用阻尼 (Damping) 防止震荡
+            // 6. 应用阻尼
             if (this.dampingFactor < 1.0 && this.dampingFactor > 0) {
                 Quaternion.slerp(Quaternion.DEFAULT, rotation, this.dampingFactor, rotation);
             }
 
             // 7. 应用旋转到关节
-            // 新旋转 = DeltaRot * 旧旋转 (注意乘法顺序，Delta 是在父空间/世界空间应用的)
             const curQ = joint.rotationQuat;
             Quaternion.multiply(rotation, curQ, curQ);
             curQ.normalize(curQ);
             joint.rotationQuat = curQ;
 
-            // 8. 数学更新末端位置 (Mathematical FK)
-            // 这样可以避免更新所有中间子关节的位置，只追踪末端
-            // NewEndPos = Pivot + Rot * (OldEndPos - Pivot)
-            
-            // 8.1 获取原始向量 (未归一化)
+            // 8. 更新末端位置 (FK Estimation)
+            // 重新获取未归一化的 jointToEnd
             currentEndPos.vsub(pivot, jointToEnd);
-            
-            // 8.2 旋转向量
+            // 旋转它
             Vector3.transformQuat(jointToEnd, rotation, jointToEnd);
-            
-            // 8.3 更新末端位置
+            // 加回 Pivot
             Vector3.add(pivot, jointToEnd, currentEndPos);
-
-            // TODO: 如果有关节约束 (Constraint)，需要在这里应用，并修正 currentEndPos
-            // 目前为了性能暂时略过，或者在 updateAllJointPositions 中统一修正
         }
 
         return false;
     }
 
     /**
-     * FK (正向运动学) 更新所有关节位置
-     * 根据父关节的位置和旋转，以及子关节的相对偏移 (relPos)，重新计算子关节的世界坐标
+     * FK 更新所有关节位置
      */
     private updateAllJointPositions(joints: any[], endId: number) {
-        // 从根节点的子节点开始更新 (根节点位置假设不变，或者由外部控制)
-        // i 是父节点索引
         for (let i = 0; i < endId; i++) {
             const parent = joints[i];
             const child = joints[i + 1];
             
             if (child) {
                 // ChildPos = ParentPos + ParentRot * ChildRelPos
-                const offset = tmpVec3_4;
+                const offset = this._calcVecA; // 使用通用变量
                 Vector3.transformQuat(child.relPos, parent.rotationQuat, offset);
                 
-                const newPos = child.position; // 引用 Laya 的 Vector3 对象
-                // 手动赋值避免 new
+                const newPos = child.position;
                 newPos.x = parent.position.x + offset.x;
                 newPos.y = parent.position.y + offset.y;
                 newPos.z = parent.position.z + offset.z;
-                
-                // Laya 可能需要标记 transform 脏，但通常修改 position 属性会自动处理
-                child.position = newPos; 
+                child.position = newPos;
             }
         }
     }
 
     /**
-     * 处理目标不可达的情况：拉直链条指向目标
+     * 处理不可达情况
      */
     private handleUnreachable(joints: any[], endId: number, basePos: Vector3, targetPos: Vector3) {
-        const dir = tmpVec3_1;
-        const rot = tmpQuat_1;
-        
-        // 计算 根->目标 的方向
-        targetPos.vsub(basePos, dir);
-        if (dir.lengthSquared() < 1e-6) return; // 重合了
-        dir.normalize();
+        // 复用通用变量
+        const dirToTarget = this._calcVecA;
+        const dirJointToNext = this._calcVecB;
+        const rot = this._rotationDelta; // 复用旋转变量
 
-        // 简单的策略：
-        // 1. 将所有关节（除了最后一个）的旋转设置为“指向子节点”的方向为“指向目标”
-        // 或者更简单：将整个链条视为直线，旋转根节点指向目标，后续节点全部归零(相对于父)或者设为直线。
-        // 这里采用逐个对齐的策略，保留之前的逻辑，但简化计算
-        
-        // 其实如果不可达，通常意味着全部伸直。
-        // 我们只需要计算 根->目标 的旋转，应用到根节点。
-        // 然后后续所有节点相对于父节点的旋转设为 identity (即伸直状态)。
-        // 但这依赖于“relPos”本身是沿 Z 轴还是什么轴。
-        // 比较稳妥的方法是逐个旋转：
-        
         for (let i = 0; i < endId; i++) {
             const joint = joints[i];
             if (joint.fixed) continue;
@@ -241,32 +211,28 @@ export class IK_CCDSolver implements IK_ISolver {
             const next = joints[i+1];
             if (!next) break;
 
-            // 关节当前指向子关节的向量（世界空间）
-            const currentDir = tmpVec3_2;
-            next.position.vsub(joint.position, currentDir);
-            currentDir.normalize();
+            // 当前朝向
+            next.position.vsub(joint.position, dirJointToNext);
+            dirJointToNext.normalize();
             
-            // 目标方向（这里简化为：所有骨骼都试图指向最终 Target）
-            // 这会造成“拉直”的效果
-            const targetDir = tmpVec3_3;
-            targetPos.vsub(joint.position, targetDir);
-            targetDir.normalize();
+            // 目标朝向
+            targetPos.vsub(joint.position, dirToTarget);
+            dirToTarget.normalize();
 
-            // 计算旋转
-            quaternionFromTo(currentDir, targetDir, rot);
+            // 旋转
+            quaternionFromTo(dirJointToNext, dirToTarget, rot);
             
-            // 应用旋转
             const curQ = joint.rotationQuat;
             Quaternion.multiply(rot, curQ, curQ);
             joint.rotationQuat = curQ;
 
-            // 必须立即更新子节点位置，因为下一个循环依赖 next.position
+            // 立即更新下一节位置
             this.updateOneChildPosition(joint, next);
         }
     }
 
     private updateOneChildPosition(parent: any, child: any) {
-        const offset = tmpVec3_4;
+        const offset = this._calcVecC; // 避免与 handleUnreachable 中的 A/B 冲突（虽不是递归，但为了保险）
         Vector3.transformQuat(child.relPos, parent.rotationQuat, offset);
         
         const newPos = child.position;
@@ -285,43 +251,64 @@ export class IK_CCDSolver implements IK_ISolver {
     }
 
     /**
-     * 极向量处理 (保持原有逻辑，稍微整理变量)
+     * 极向量处理
      */
     private solvePoleVector(comp: IK_Comp, chain: IK_Chain, joints: any[], endId: number, basePos: Vector3) {
-        // 静态变量复用
-        const axis = tmpVec3_1;
-        const baseToPole = tmpVec3_2;
-        const baseToMid = tmpVec3_3;
-        const projMid = tmpVec3_4;
-        const projPole = tmpVec3_5;
-        const tmpCalc = new Vector3(); // 临时用一下，避免复杂的别名覆盖风险，或者小心使用
+        const axis = this._calcVecA;
+        const baseToPole = this._calcVecB;
+        const baseToMid = this._calcVecC;
+        
+        // 极向量特有的投影向量，为防混淆，可以复用 _jointTo... 变量，或者再增加几个通用变量
+        // 这里复用 _pivotPos 和 _currentEndPos 作为临时存储是不安全的，因为它们有特定语义。
+        // 为了代码清晰，我们在方法内定义别名指向通用变量，或者不够用时增加变量。
+        // 这里使用 _jointToEndVec / _jointToTargetVec 作为临时的 projMid / projPole
+        const projMid = this._jointToEndVec;
+        const projPole = this._jointToTargetVec;
+        const tmpCross = this._pivotPos; // 借用 pivotPos 存 Cross 结果
 
         const endPos = joints[endId].position;
         const polePos = this.poleTarget.pos;
-        const midPos = chain.joints[1].position; // 假设 joint[1] 是中间关节 (膝盖/肘)
+        const midPos = chain.joints[1].position;
 
-        // 构建向量
         endPos.vsub(basePos, axis);
         polePos.vsub(basePos, baseToPole);
         midPos.vsub(basePos, baseToMid);
 
         if (axis.lengthSquared() < 1e-6) return;
 
-        // 1. 归一化旋转轴 (根->末端)
         axis.normalize();
 
-        // 2. 投影 Mid 和 Pole 到垂直于 Axis 的平面
-        // proj(v) = v - axis * (v . axis)
-        
         // Proj Mid
         const dotMid = Vector3.dot(baseToMid, axis);
-        axis.scale(dotMid, tmpCalc);
-        baseToMid.vsub(tmpCalc, projMid);
+        const tmpVec = this._calcQuat; // 借用 Quat 内存? 不行，类型不同。
+        // 我们需要一个新的 Vector3，或者小心复用。
+        // 既然是基于类的，增加一个 _calcVecD 成本很低。
+        // 但这里我们可以直接运算： proj = v - axis * dot
+        // 下面这种写法是为了避免 new Vector3
+        
+        // 借用一下 updateAllJointPositions 才会用到的 _calcVecC (不，这里正在用 baseToMid=C)
+        // 我们需要一个 tmp 来存 axis * dot
+        // 此时 _targetPos 是空闲的吗？是的，主流程 solve 已结束，只剩 pole。
+        // 但为了稳健，不要复用状态变量。
+        // 最好还是定义足够的通用变量。
+        
+        // 这里临时 new 一个也没事，因为极向量计算频率较低（每帧一次）。
+        // 或者我们复用 _jointToEndVec (projMid) 来暂存 axis * dot，计算完后再 sub
+        // projMid = baseToMid - (axis * dot)
+        
+        // step 1: tmp = axis * dot
+        const tmpAxisScaled = projMid; 
+        axis.scale(dotMid, tmpAxisScaled);
+        
+        // step 2: projMid = baseToMid - tmp
+        // 注意：baseToMid 和 projMid 如果指向不同内存，则：
+        baseToMid.vsub(tmpAxisScaled, projMid); // 结果存入 projMid
 
         // Proj Pole
         const dotPole = Vector3.dot(baseToPole, axis);
-        axis.scale(dotPole, tmpCalc);
-        baseToPole.vsub(tmpCalc, projPole);
+        const tmpAxisScaled2 = projPole;
+        axis.scale(dotPole, tmpAxisScaled2);
+        baseToPole.vsub(tmpAxisScaled2, projPole);
 
         const lenMid = projMid.length();
         const lenPole = projPole.length();
@@ -330,22 +317,19 @@ export class IK_CCDSolver implements IK_ISolver {
             projMid.scale(1/lenMid, projMid);
             projPole.scale(1/lenPole, projPole);
 
-            // 3. 计算角度
             const cosTheta = Math.max(-1, Math.min(1, Vector3.dot(projMid, projPole)));
-            Vector3.cross(projMid, projPole, tmpCalc);
-            const sinTheta = Vector3.dot(tmpCalc, axis);
+            Vector3.cross(projMid, projPole, tmpCross);
+            const sinTheta = Vector3.dot(tmpCross, axis);
             const angle = Math.atan2(sinTheta, cosTheta);
 
             if (Math.abs(angle) > 1e-4) {
-                // 4. 应用旋转到根节点
                 comp.pole_rot = angle;
-                const rot = tmpQuat_1;
+                const rot = this._rotationDelta; // 复用
                 Quaternion.createFromAxisAngle(axis, angle, rot);
                 
                 const rootJoint = joints[0];
                 Quaternion.multiply(rot, rootJoint.rotationQuat, rootJoint.rotationQuat);
                 
-                // 旋转根节点后，整条链的位置都需要更新
                 this.updateAllJointPositions(joints, endId);
             }
         }
