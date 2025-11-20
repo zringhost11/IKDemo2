@@ -1,6 +1,7 @@
 import { IK_Chain } from "../IK_Chain";
 import { IK_Comp } from "../IK_Comp";
 import { IK_ISolver } from "../IK_ISolver";
+import { IK_Joint } from "../IK_Joint";
 import { IK_Target } from "../IK_Target";
 import { quaternionFromTo } from "../IK_Utils"
 
@@ -80,13 +81,6 @@ export class IK_CCDSolver implements IK_ISolver {
             
             if (touched) break;
 
-            // 3.2 检查误差
-            const currentDistSq = Vector3.distanceSquared(this._currentEndPos, this._targetPos);
-            if (currentDistSq < epsilonSq) {
-                touched = true;
-                break;
-            }
-
             iteration++;
             
             // 3.3 FK 更新：为下一轮迭代准备准确的关节位置
@@ -116,8 +110,6 @@ export class IK_CCDSolver implements IK_ISolver {
      */
     private solveOneIteration(joints: any[], endId: number, targetPos: Vector3, epsilonSq: number): boolean {
         const currentEndPos = this._currentEndPos;
-        
-        // 使用类成员变量，清晰明了
         const jointToEnd = this._jointToEndVec;
         const jointToTarget = this._jointToTargetVec;
         const rotation = this._rotationDelta;
@@ -176,7 +168,7 @@ export class IK_CCDSolver implements IK_ISolver {
     /**
      * FK 更新所有关节位置
      */
-    private updateAllJointPositions(joints: any[], endId: number) {
+    private updateAllJointPositions(joints: IK_Joint[], endId: number) {
         for (let i = 0; i < endId; i++) {
             const parent = joints[i];
             const child = joints[i + 1];
@@ -253,7 +245,7 @@ export class IK_CCDSolver implements IK_ISolver {
     /**
      * 极向量处理
      */
-    private solvePoleVector(comp: IK_Comp, chain: IK_Chain, joints: any[], endId: number, basePos: Vector3) {
+    private solvePoleVector(comp: IK_Comp, chain: IK_Chain, joints: IK_Joint[], endId: number, basePos: Vector3) {
         const axis = this._calcVecA;
         const baseToPole = this._calcVecB;
         const baseToMid = this._calcVecC;
