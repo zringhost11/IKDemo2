@@ -1,12 +1,12 @@
 const { regClass, property } = Laya;
 
-// import { IK_Chain } from "./IK/IK_Chain";
-// import { IK_Comp } from "./IK/IK_Comp";
-// import { IK_Target } from "./IK/IK_Target";
+import { IK_Chain } from "./IK/IK_Chain";
+import { IK_Comp } from "./IK/IK_Comp";
+import { IK_Target } from "./IK/IK_Target";
 
-const {IK_Comp,IK_Target} = Laya;
-type IK_Chain = Laya.IK_Chain;
-type IK_Comp = Laya.IK_Comp;
+// const {IK_Comp,IK_Target} = Laya;
+// type IK_Chain = Laya.IK_Chain;
+// type IK_Comp = Laya.IK_Comp;
 
 @regClass()
 export class PersonScript2 extends Laya.Script {
