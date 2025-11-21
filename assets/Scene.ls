@@ -1101,7 +1101,8 @@
                   "controller": {
                     "_$uuid": "0fb5fc95-d8e8-4e50-ac12-b6ac01804621",
                     "_$type": "AnimationController"
-                  }
+                  },
+                  "enabled": true
                 },
                 {
                   "_$type": "4670af2c-a27a-4892-bf7a-b953ed36bbce",
@@ -1111,6 +1112,7 @@
                 },
                 {
                   "_$type": "IK_Comp",
+                  "enabled": false,
                   "chainDatas": [
                     {
                       "_$type": "IK_ChainData",
@@ -1164,7 +1166,6 @@
                       "PoleTarget": {
                         "_$ref": "e2qn3b99"
                       },
-                      "maxError": 0.001,
                       "blendWeight": 0,
                       "smoothBlendWeight": true
                     },
@@ -1220,7 +1221,6 @@
                       "PoleTarget": {
                         "_$ref": "c2sng9uy"
                       },
-                      "maxError": 0.001,
                       "smoothBlendWeight": true
                     }
                   ],
@@ -1230,7 +1230,6 @@
                 },
                 {
                   "_$type": "45a75369-e319-4c4f-b08d-30558b0d1093",
-                  "enabled": false,
                   "scriptPath": "../src/IK/IK_Comp.ts",
                   "chainDatas": [
                     {
@@ -1243,8 +1242,10 @@
                       "bones": null,
                       "fixedEnd": false,
                       "alignTarget": "y",
-                      "target": null,
-                      "enablePoleTarget": false,
+                      "target": {
+                        "_$ref": "1y9vhbpb"
+                      },
+                      "enablePoleTarget": true,
                       "PoleTarget": {
                         "_$ref": "c2sng9uy"
                       },
@@ -1261,30 +1262,34 @@
                       "fixedEnd": false,
                       "alignTarget": "y",
                       "target": null,
-                      "enablePoleTarget": false,
+                      "enablePoleTarget": true,
                       "PoleTarget": {
                         "_$ref": "e2qn3b99"
                       },
-                      "jointCount": 4
+                      "jointCount": 4,
+                      "enable": false
                     }
                   ],
-                  "solverIteration": 23,
+                  "solverIteration": 71,
                   "dirSolverIteration": 10,
                   "dampingFactor": 0.972,
                   "showGizmos": true,
+                  "recordIkFrames": false,
+                  "frameRecordDepth": 240,
+                  "frameReplayOffset": 0,
                   "显示约束": true,
                   "显约束轴": true,
                   "RunInEditor": false,
                   "useAnimLayer": false,
                   "showBone": false,
-                  "pickBone": false,
+                  "pickBone": true,
                   "pickHideBone": false,
                   "hideBone": false,
                   "enableControl": false,
                   "controlWithConstraint": false,
                   "showAxis": false,
                   "axisLength": 0.3,
-                  "poseName": null
+                  "poseName": "zhan"
                 },
                 {
                   "_$type": "038181e4-80c7-46a9-a3f5-7c080ae802f9",
@@ -1292,6 +1297,27 @@
                   "ui": {
                     "_$ref": "d2rn23d7"
                   }
+                },
+                {
+                  "_$type": "c14be900-64b4-4aed-b5c0-9b0a58d5d922",
+                  "scriptPath": "../src/IK/BoneConstraints.ts",
+                  "constraints": [
+                    {
+                      "_$type": "cfe1d96e-589c-429c-8a34-550da5bd5dbf",
+                      "enable": false,
+                      "bone": {
+                        "_$ref": [
+                          "4v08fmbw",
+                          "#169"
+                        ]
+                      },
+                      "type": "swingtwist",
+                      "space": null,
+                      "constraintBone": true,
+                      "xmax": 32.795,
+                      "ymax": 29.745
+                    }
+                  ]
                 }
               ],
               "_$child": [
@@ -1303,16 +1329,16 @@
                   "transform": {
                     "localPosition": {
                       "_$type": "Vector3",
-                      "x": -0.0007242350558929189,
-                      "y": 6.148420061335571,
-                      "z": -7.520056904021089
+                      "x": -0.0007242350839078426,
+                      "y": 6.148427486419678,
+                      "z": -7.520066261291504
                     },
                     "localRotation": {
                       "_$type": "Quaternion",
-                      "x": -1.1031212107659472e-7,
-                      "y": -0.42910345498326224,
-                      "z": -0.9032553486812577,
-                      "w": 3.3926053287503014e-7
+                      "x": 1.1031211924775005e-7,
+                      "y": 0.42910345498326163,
+                      "z": 0.9032553486812579,
+                      "w": -3.392605339074951e-7
                     },
                     "localScale": {
                       "_$type": "Vector3",
@@ -1330,22 +1356,22 @@
                   "transform": {
                     "localPosition": {
                       "_$type": "Vector3",
-                      "x": 0.0005338710923048495,
-                      "y": 6.147186416203283,
-                      "z": -2.969017297503285
+                      "x": 0.0005338710616342723,
+                      "y": 6.147222995758057,
+                      "z": -2.9689865112304688
                     },
                     "localRotation": {
                       "_$type": "Quaternion",
-                      "x": -1.1478161725253509e-7,
-                      "y": -0.429103415275874,
-                      "z": -0.9032553675447776,
-                      "w": 3.4125293611742e-7
+                      "x": 1.1478161521986398e-7,
+                      "y": 0.4291034152758748,
+                      "z": 0.9032553675447773,
+                      "w": -3.4125293130607997e-7
                     },
                     "localScale": {
                       "_$type": "Vector3",
                       "x": 1.0000000000002591,
-                      "y": 1.0000000386711827,
-                      "z": 1.0000000386709307
+                      "y": 1.000000076325851,
+                      "z": 1.000000076325599
                     }
                   }
                 },
@@ -1433,6 +1459,46 @@
               ]
             }
           ]
+        },
+        {
+          "_$id": "1y9vhbpb",
+          "_$type": "Sprite3D",
+          "name": "Cube",
+          "transform": {
+            "localPosition": {
+              "_$type": "Vector3",
+              "x": 0.1089830317998998,
+              "y": 0.16280312001033692,
+              "z": -5.06105970224397
+            },
+            "localScale": {
+              "_$type": "Vector3",
+              "x": 0.1,
+              "y": 0.1,
+              "z": 0.1
+            }
+          },
+          "_$comp": [
+            {
+              "_$type": "MeshFilter",
+              "sharedMesh": {
+                "_$uuid": "6e013e32-fec7-4397-80d1-f918a07607be",
+                "_$type": "Mesh"
+              }
+            },
+            {
+              "_$type": "MeshRenderer",
+              "lightmapScaleOffset": {
+                "_$type": "Vector4"
+              },
+              "sharedMaterials": [
+                {
+                  "_$uuid": "6f90bbb0-bcb2-4311-8a9d-3d8277522098",
+                  "_$type": "Material"
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -1468,6 +1534,103 @@
       "y": 29,
       "width": 783,
       "height": 100
+    },
+    {
+      "_$id": "a59e4zhu",
+      "_$var": true,
+      "_$type": "Sprite",
+      "name": "btns",
+      "x": 197,
+      "y": 153,
+      "width": 100,
+      "height": 100,
+      "_$comp": [
+        {
+          "_$type": "59da6065-1dec-4006-9fa0-5fd1ad937bb1",
+          "scriptPath": "../src/IK/IK_RecUI.ts",
+          "ikComp": {
+            "_$ref": "4v08fmbw",
+            "_$type": "45a75369-e319-4c4f-b08d-30558b0d1093"
+          }
+        }
+      ],
+      "_$child": [
+        {
+          "_$id": "y0g2j71c",
+          "_$var": true,
+          "_$type": "Button",
+          "name": "startrec",
+          "x": 137,
+          "y": 25,
+          "width": 120,
+          "height": 40,
+          "skin": "res://d4cfd6a8-0d0a-475b-ac93-d85eaa646936",
+          "label": "记录",
+          "labelAlign": "center",
+          "labelVAlign": "middle",
+          "labelStrokeColor": "#ac5e5e"
+        },
+        {
+          "_$id": "s2q2dc4y",
+          "_$var": true,
+          "_$type": "Button",
+          "name": "play",
+          "x": 268,
+          "y": 25,
+          "width": 120,
+          "height": 40,
+          "skin": "res://d4cfd6a8-0d0a-475b-ac93-d85eaa646936",
+          "label": "回放",
+          "labelAlign": "center",
+          "labelVAlign": "middle",
+          "labelStrokeColor": "#ac5e5e"
+        },
+        {
+          "_$id": "ozeydpn8",
+          "_$var": true,
+          "_$type": "Button",
+          "name": "stop",
+          "x": 399,
+          "y": 25,
+          "width": 120,
+          "height": 40,
+          "skin": "res://d4cfd6a8-0d0a-475b-ac93-d85eaa646936",
+          "label": "停止",
+          "labelAlign": "center",
+          "labelVAlign": "middle",
+          "labelStrokeColor": "#ac5e5e"
+        },
+        {
+          "_$id": "5n08zkd0",
+          "_$var": true,
+          "_$type": "Button",
+          "name": "prev",
+          "x": 530,
+          "y": 25,
+          "width": 120,
+          "height": 40,
+          "skin": "res://d4cfd6a8-0d0a-475b-ac93-d85eaa646936",
+          "label": "上一帧",
+          "labelAlign": "center",
+          "labelVAlign": "middle",
+          "labelStrokeColor": "#ac5e5e"
+        },
+        {
+          "_$id": "vq4pgm52",
+          "_$var": true,
+          "_$type": "Button",
+          "name": "next",
+          "x": 661,
+          "y": 25,
+          "width": 120,
+          "height": 40,
+          "skin": "res://d4cfd6a8-0d0a-475b-ac93-d85eaa646936",
+          "label": "下一帧",
+          "labelAlign": "center",
+          "labelVAlign": "middle",
+          "labelStrokeColor": "#ac5e5e"
+        }
+      ]
     }
   ]
 }
