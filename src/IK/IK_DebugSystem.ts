@@ -19,7 +19,7 @@ export class IK_DebugSystem extends Laya.Script{
     //private color:string[]=['red','green','blue','#ffff00','#ff00ff','#ee95fdff']
     private config = [
         //0
-        {min:0,max:0.2,color:'red',skip:false},
+        {min:0,max:0.05,color:'red',skip:false},
         //1
         {min:0,max:100,color:'green'},
         //2
@@ -27,7 +27,7 @@ export class IK_DebugSystem extends Laya.Script{
         //3
         {min:0,max:0.01,color:'#ffff00',skip:true},
         //4
-        {min:0,max:1,color:'#ff00ff',skip:true},
+        {min:0,max:1,color:'#ff00ff',skip:false},
         //5
         {min:0,max:1000,color:'#c7befdff',skip:true},
     ]
@@ -72,7 +72,7 @@ export class IK_DebugSystem extends Laya.Script{
                 let v1 = curdata[i];
                 let ly = (1-lv/r1)*height;
                 let y = (1-v1/r1)*height;
-                g.drawLine(lastx,ly,x,y,this.config[i].color);
+                g.drawLine(lastx,ly,x-1,y,this.config[i].color);
             }
         }
         if(datas.length>this.datacnt){

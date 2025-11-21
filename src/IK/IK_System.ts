@@ -1,5 +1,5 @@
 import { IK_CCDSolver } from "./IKSolver/IK_CCD_Solver";
-import { IK_Chain } from "./IK_Chain";
+import { IK_Chain, IK_ChainDebugSnapshot } from "./IK_Chain";
 import { IK_ISolver } from "./IK_ISolver";
 import { IK_Joint } from "./IK_Joint";
 import { IK_Target } from "./IK_Target";
@@ -10,6 +10,7 @@ import { IK_ConstraintInstance } from "./IK_Constraint";
 import { IK_Lookat } from "./IK_Lookat";
 import { ILinerender } from "../skeleton/LineRender";
 import { IK_AnimLayer } from "./IK_AnimLayer";
+import { IK_DebugRecorder } from "./IK_DebugRecorder";
 
 const {Mesh,Sprite3D,Vector3,Quaternion,Animator,BlinnPhongMaterial,MeshFilter,MeshRenderer,PrimitiveMesh,Color,RenderState,Scene3D} = Laya;
 type Vector3 = Laya.Vector3;
@@ -63,6 +64,7 @@ export class IK_System {
     enableSolver=true;
     ikcomp:IK_Comp=null;
     useAnimLayer=false;
+    private _debugRecorder = new IK_DebugRecorder();
 
     constructor(comp:IK_Comp) {
         this.ikcomp=comp;
@@ -135,6 +137,7 @@ export class IK_System {
     clear(){
         this.chains.length=0;
         this.lookats.length=0;
+        this._debugRecorder.clear();
     }
 
     private _getChildByName(sp:Sprite3D, name:string):Sprite3D|null{
@@ -279,13 +282,17 @@ export class IK_System {
     }
 
     async onUpdate(){
-        // if(this._visualSp){
-        //     this._visualSp.clear();
-        // }
+        const isReplaying = this._debugRecorder.isReplaying();
+        const replayFrame = this._debugRecorder.getReplayFrame();
+        const frameSnapshots: IK_ChainDebugSnapshot[] | null = this._debugRecorder.canRecordFrame()
+            ? []
+            : null;
 
         for(let chain of this.chains){
             let isRunning = this.enableSolver && chain.enable;
             chain.isRunning=isRunning;
+            const replaySnapshot = replayFrame?.chainStates.find((s) => s.chainName === chain.name);
+
             if(this.useAnimLayer){
                 if(isRunning){
                     chain.captureAnimPose();
@@ -301,7 +308,14 @@ export class IK_System {
                 }
             }else{
                 if(isRunning){
-                    chain.copyCurPoseAsInitPose();
+                    if (replaySnapshot) {
+                        chain.applyDebugSnapshot(replaySnapshot);
+                    } else {
+                        chain.copyCurPoseAsInitPose();
+                    }
+                    if (frameSnapshots && !replaySnapshot) {
+                        frameSnapshots.push(chain.getDebugSnapshot());
+                    }
                     chain.solve(this.ikcomp);
                     chain.applyIKResult(this.ikcomp);
                 }
@@ -331,7 +345,36 @@ export class IK_System {
                 }
             }
         }
+        if (frameSnapshots?.length) {
+            this._debugRecorder.recordFrame(frameSnapshots);
+        }
         //this.visualize();
     }
 
+    setFrameRecorderEnabled(enabled: boolean) {
+        this._debugRecorder.enabled = enabled;
+        if (!enabled) {
+            this._debugRecorder.stopReplay();
+        }
+    }
+
+    setFrameRecorderDepth(count: number) {
+        this._debugRecorder.maxFrames = Math.max(1, Math.floor(count));
+    }
+
+    startFrameDebugReplay(offset = 0) {
+        this._debugRecorder.startReplay(offset);
+    }
+
+    stopFrameDebugReplay() {
+        this._debugRecorder.stopReplay();
+    }
+
+    stepFrameDebugReplay(delta: number) {
+        this._debugRecorder.step(delta);
+    }
+
+    getFrameReplayInfo() {
+        return this._debugRecorder.replayInfo;
+    }
 }

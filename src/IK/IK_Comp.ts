@@ -44,6 +44,10 @@ export class IK_Comp extends Laya.Script {
     targetChange=0;
     blendW=0;
 
+    private _recordIkFrames = false;
+    private _frameRecordDepth = 60;
+    private _frameReplayOffset = 0;
+
     @property({ type: [IK_ChainData], onChange: "onChainDataChange" })
     set chainDatas(v: IK_ChainData[]) {
         this._chainDatas = v;
@@ -107,6 +111,76 @@ export class IK_Comp extends Laya.Script {
     }
     get showGizmos() {
         return this._showDbg;
+    }
+
+    @property({ type: Boolean, catalog: 'debug', caption: '记录IK帧' })
+    set recordIkFrames(v: boolean) {
+        this._recordIkFrames = v;
+        if (this._ik_sys) {
+            this._ik_sys.setFrameRecorderEnabled(v);
+        }
+    }
+    get recordIkFrames() {
+        return this._recordIkFrames;
+    }
+
+    @property({ type: Number, catalog: 'debug', min: 5, max: 240, caption: '帧缓存数' })
+    set frameRecordDepth(v: number) {
+        this._frameRecordDepth = v;
+        if (this._ik_sys) {
+            this._ik_sys.setFrameRecorderDepth(v);
+        }
+    }
+    get frameRecordDepth() {
+        return this._frameRecordDepth;
+    }
+
+    @property({ type: Number, catalog: 'debug', min: 0, max: 240, caption: '回放偏移' })
+    set frameReplayOffset(v: number) {
+        this._frameReplayOffset = Math.max(0, v);
+    }
+    get frameReplayOffset() {
+        return this._frameReplayOffset;
+    }
+
+    @property({ type: Boolean, serializable: false, catalog: 'debug', caption: '回放最近帧' })
+    set 回放最近帧(v: boolean) {
+        if (v) {
+            this._ik_sys?.startFrameDebugReplay(this._frameReplayOffset);
+        }
+    }
+    get 回放最近帧() {
+        return false;
+    }
+
+    @property({ type: Boolean, serializable: false, catalog: 'debug', caption: '停止帧回放' })
+    set 停止帧回放(v: boolean) {
+        if (v) {
+            this._ik_sys?.stopFrameDebugReplay();
+        }
+    }
+    get 停止帧回放() {
+        return false;
+    }
+
+    @property({ type: Boolean, serializable: false, catalog: 'debug', caption: '上一帧' })
+    set 回放上一帧(v: boolean) {
+        if (v) {
+            this._ik_sys?.stepFrameDebugReplay(-1);
+        }
+    }
+    get 回放上一帧() {
+        return false;
+    }
+
+    @property({ type: Boolean, serializable: false, catalog: 'debug', caption: '下一帧' })
+    set 回放下一帧(v: boolean) {
+        if (v) {
+            this._ik_sys?.stepFrameDebugReplay(1);
+        }
+    }
+    get 回放下一帧() {
+        return false;
     }
 
     @property({ type: Boolean, catalog: 'debug' })
@@ -285,6 +359,8 @@ export class IK_Comp extends Laya.Script {
         let ik = this._ik_sys = new IK_System(this);
         ik.setRoot(this.owner as Sprite3D);
         ik.showDbg = this._showDbg;
+        ik.setFrameRecorderEnabled(this._recordIkFrames);
+        ik.setFrameRecorderDepth(this._frameRecordDepth);
     }
 
     onAfterDeserialize() {

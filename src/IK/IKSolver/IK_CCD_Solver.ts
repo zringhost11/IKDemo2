@@ -10,7 +10,7 @@ type Vector3 = Laya.Vector3
 type Quaternion = Laya.Quaternion
 
 export class IK_CCDSolver implements IK_ISolver {
-    dampingFactor: number = 0.1; 
+    dampingFactor: number = 0.6; 
     maxIterations: number;
     poleTarget: IK_Target = null;
 
@@ -32,10 +32,6 @@ export class IK_CCDSolver implements IK_ISolver {
     private _calcVecB = new Vector3();
     private _calcVecC = new Vector3();
     private _calcQuat = new Quaternion();
-
-    // Debug
-    private _logCounter = 0;
-    private _lastAngle = 0;
 
     constructor(maxIterations: number = 1) {
         this.maxIterations = maxIterations;
@@ -93,7 +89,7 @@ export class IK_CCDSolver implements IK_ISolver {
             iteration++;
             
             // 3.3 FK 更新
-            if (iteration < this.maxIterations) {
+            if (iteration < this.maxIterations) {//这个判断是为了避免最后多做一次
                 this.updateAllJointPositions(joints, endId);
                 endEffector.position.cloneTo(this._currentEndPos);
             }
@@ -103,7 +99,6 @@ export class IK_CCDSolver implements IK_ISolver {
         this.updateAllJointPositions(joints, endId);
 
         // 5. 极向量约束 (后处理)
-        // 依然保留后处理，以修正 CCD 迭代过程中可能产生的微小偏差
         if (this.poleTarget && joints.length > 2) {
             this.solvePoleVector(comp, chain, joints, endId, basePos);
         }
@@ -115,37 +110,31 @@ export class IK_CCDSolver implements IK_ISolver {
     }
 
     /**
-     * 预旋转：将骨骼链平面旋转对齐到 Pole Target 平面
-     * 重点旋转根节点 (joints[0])，使 joints[1] (膝盖) 尽量指向 Pole
+     * 预旋转：将骨骼链平面旋转对齐到 Pole Target 平面 (纯 Twist 版 + 权重淡出)
      */
     private preRotateToPole(joints: IK_Joint[], endId: number, basePos: Vector3) {
         const polePos = this.poleTarget.pos;
         const midJoint = joints[1];
-        const endJoint = joints[endId]; // 当前的末端，可能还没碰到目标
+        const endJoint = joints[endId]; 
 
-        // 1. 计算当前的 "Base->End" 轴
         const axis = this._calcVecA;
         endJoint.position.vsub(basePos, axis);
-        if (axis.lengthSquared() < 1e-6) return; // 还没拉开距离，无法确定轴
+        if (axis.lengthSquared() < 1e-6) return; 
         axis.normalize();
 
-        // 2. 计算当前的 "Base->Mid" 投影 (当前膝盖方向)
         const baseToMid = this._calcVecB;
         midJoint.position.vsub(basePos, baseToMid);
         
-        const projMid = this._jointToEndVec; // 复用变量
-        // projMid = baseToMid - axis * (baseToMid . axis)
+        const projMid = this._jointToEndVec;
         const dotMid = Vector3.dot(baseToMid, axis);
         const tmp = this._calcVecC;
         axis.scale(dotMid, tmp);
         baseToMid.vsub(tmp, projMid);
 
-        // 3. 计算 "Base->Pole" 投影 (目标膝盖方向)
-        const baseToPole = this._jointToTargetVec; // 复用变量
+        const baseToPole = this._jointToTargetVec; 
         polePos.vsub(basePos, baseToPole);
         
-        const projPole = this._pivotPos; // 复用变量
-        // projPole = baseToPole - axis * (baseToPole . axis)
+        const projPole = this._pivotPos;
         const dotPole = Vector3.dot(baseToPole, axis);
         axis.scale(dotPole, tmp);
         baseToPole.vsub(tmp, projPole);
@@ -307,11 +296,7 @@ export class IK_CCDSolver implements IK_ISolver {
                 comp.pole_rot = angle;
                 const rot = this._rotationDelta; 
                 Quaternion.createFromAxisAngle(axis, angle, rot);
-                
-                const rootJoint = joints[0];
-                Quaternion.multiply(rot, rootJoint.rotationQuat, rootJoint.rotationQuat);
-                
-                this.updateAllJointPositions(joints, endId);
+                chain.rotateJoint(0,rot);
             }
         }
     }
