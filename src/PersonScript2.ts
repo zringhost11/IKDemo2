@@ -29,6 +29,9 @@ export class PersonScript2 extends Laya.Script {
     private readonly runPersistMs: number = 200;
     private characterController: Laya.CharacterController;
     private scene3D: Laya.Scene3D;
+    // 调试用：线条渲染器
+    private debugLineRenderer: Laya.PixelLineRenderer;
+    private debugLineIndex: number = 0; // 当前线条索引
     //组件被激活后执行，此时所有节点和组件均已创建完毕，此方法只执行一次
     //onAwake(): void {}
 
@@ -56,6 +59,35 @@ export class PersonScript2 extends Laya.Script {
         this.animator = node.getComponent(Laya.Animator);
         this.phyAni = node.parent.getComponent(Laya.Animator);
 
+        // 初始化调试线条渲染器
+        this.initDebugRenderer();
+    }
+
+    /**
+     * 初始化调试渲染器
+     */
+    private initDebugRenderer(): void {
+        // 创建一个用于绘制调试线条的节点
+        const debugNode = new Laya.Sprite3D();
+        debugNode.name = "DebugLineRenderer";
+        this.scene3D.addChild(debugNode);
+
+        // 添加 PixelLineRenderer 组件
+        this.debugLineRenderer = debugNode.addComponent(Laya.PixelLineRenderer);
+        this.debugLineRenderer.maxLineCount = 200; // 增加最大线条数量以支持粗线效果
+        
+        // 尝试设置材质颜色（如果支持的话）
+        if ((this.debugLineRenderer as any)._render && (this.debugLineRenderer as any)._render.material) {
+            const material = (this.debugLineRenderer as any)._render.material;
+            if (material.albedoColor !== undefined) {
+                material.albedoColor = new Laya.Vector4(0, 0, 1, 1); // 蓝色
+            }
+        }
+        
+        // 尝试设置线条宽度（如果支持的话）
+        if ((this.debugLineRenderer as any).widthMultiplier !== undefined) {
+            (this.debugLineRenderer as any).widthMultiplier = 0.05;
+        }
     }
     private _leftBlendWeight: number = 1;
     private _rightBlendWeight: number = 1;
@@ -149,6 +181,15 @@ export class PersonScript2 extends Laya.Script {
         } else if ("walk" === playName) {
             this.characterController.move(new Laya.Vector3(0, 0, 0.02 * currentDirection));
         }
+
+        // 重置调试线条索引（每帧重新开始）
+        this.debugLineIndex = 0;
+        
+        // 清除之前的线条（如果方法存在）
+        if (this.debugLineRenderer && (this.debugLineRenderer as any).clear) {
+            (this.debugLineRenderer as any).clear();
+        }
+
         this.updateFootIK(this.rightToeBase, this.rightChain, true);  // true = 右脚（红色系）
         this.updateFootIK(this.leftToeBase, this.leftChain, false);   // false = 左脚（蓝色系）
     }
@@ -197,7 +238,7 @@ export class PersonScript2 extends Laya.Script {
             this.ikcom.setTarget(chain, new IK_Target(hitPoint, targetDirection));
 
             // 可视化：绘制碰撞点和 IK 方向
-            //this.drawIKDebugLines(hitPoint, targetDirection);
+            this.drawIKDebugLines(hitPoint, targetDirection);
         } else {
 
         }
@@ -223,6 +264,116 @@ export class PersonScript2 extends Laya.Script {
 
         this.keyDownState[key] = isDown;
     }
+
+    /**
+     * 绘制 IK 调试线条（显示 hitPoint 和 targetDirection）
+     * @param hitPoint 碰撞点
+     * @param targetDirection IK Target 方向
+     */
+    private drawIKDebugLines(
+        hitPoint: Laya.Vector3,
+        targetDirection: Laya.Vector3
+    ): void {
+        if (!this.debugLineRenderer) {
+            return;
+        }
+
+        // 使用蓝色 - 直接使用 Laya.Color 常量
+        const pointColor = Laya.Color.BLUE;      // 纯蓝色（碰撞点）
+        const directionColor = Laya.Color.CYAN;   // 青色（IK 方向，更明显）
+
+        // 1. 绘制碰撞点标记（用一个小十字，增大尺寸使其更明显）
+        const markerSize = 0.1; // 标记大小（米），从0.05增加到0.1
+
+        // 绘制粗线效果：通过绘制多条相邻的线来模拟粗线
+        const lineThickness = 0.005; // 线条粗细偏移量（米）
+        
+        // X轴方向的线（绘制多条线使其变粗）
+        for (let i = -1; i <= 1; i++) {
+            for (let j = -1; j <= 1; j++) {
+                const offsetY = i * lineThickness;
+                const offsetZ = j * lineThickness;
+                const markerX1 = new Laya.Vector3(hitPoint.x - markerSize, hitPoint.y + offsetY, hitPoint.z + offsetZ);
+                const markerX2 = new Laya.Vector3(hitPoint.x + markerSize, hitPoint.y + offsetY, hitPoint.z + offsetZ);
+                if (this.debugLineIndex < this.debugLineRenderer.lineCount) {
+                    this.debugLineRenderer.setLine(this.debugLineIndex, markerX1, markerX2, pointColor, pointColor);
+                } else {
+                    this.debugLineRenderer.addLine(markerX1, markerX2, pointColor, pointColor);
+                }
+                this.debugLineIndex++;
+            }
+        }
+
+        // Z轴方向的线（绘制多条线使其变粗）
+        for (let i = -1; i <= 1; i++) {
+            for (let j = -1; j <= 1; j++) {
+                const offsetX = i * lineThickness;
+                const offsetY = j * lineThickness;
+                const markerZ1 = new Laya.Vector3(hitPoint.x + offsetX, hitPoint.y + offsetY, hitPoint.z - markerSize);
+                const markerZ2 = new Laya.Vector3(hitPoint.x + offsetX, hitPoint.y + offsetY, hitPoint.z + markerSize);
+                if (this.debugLineIndex < this.debugLineRenderer.lineCount) {
+                    this.debugLineRenderer.setLine(this.debugLineIndex, markerZ1, markerZ2, pointColor, pointColor);
+                } else {
+                    this.debugLineRenderer.addLine(markerZ1, markerZ2, pointColor, pointColor);
+                }
+                this.debugLineIndex++;
+            }
+        }
+
+        // 2. 绘制 IK Target 方向：从碰撞点开始，沿着方向绘制一条粗线
+        const directionLength = 0.3; // 方向显示长度（米）
+        const directionEnd = new Laya.Vector3();
+        directionEnd.x = hitPoint.x + targetDirection.x * directionLength;
+        directionEnd.y = hitPoint.y + targetDirection.y * directionLength;
+        directionEnd.z = hitPoint.z + targetDirection.z * directionLength;
+
+        // 计算垂直于方向的向量用于绘制粗线
+        const perp1 = new Laya.Vector3();
+        const perp2 = new Laya.Vector3();
+        if (Math.abs(targetDirection.y) < 0.9) {
+            // 如果方向不是垂直的，使用叉积计算垂直向量
+            const up = new Laya.Vector3(0, 1, 0);
+            Laya.Vector3.cross(targetDirection, up, perp1);
+            perp1.normalize();
+            Laya.Vector3.cross(perp1, targetDirection, perp2);
+            perp2.normalize();
+        } else {
+            // 如果方向接近垂直，使用X和Z轴
+            perp1.set(1, 0, 0);
+            perp2.set(0, 0, 1);
+        }
+        const perp1Scaled = new Laya.Vector3();
+        const perp2Scaled = new Laya.Vector3();
+        Laya.Vector3.scale(perp1, lineThickness, perp1Scaled);
+        Laya.Vector3.scale(perp2, lineThickness, perp2Scaled);
+
+        // 绘制多条线使其变粗
+        for (let i = -1; i <= 1; i++) {
+            for (let j = -1; j <= 1; j++) {
+                const offset1 = new Laya.Vector3();
+                Laya.Vector3.scale(perp1Scaled, i, offset1);
+                const offset2 = new Laya.Vector3();
+                Laya.Vector3.scale(perp2Scaled, j, offset2);
+                
+                const temp = new Laya.Vector3();
+                const start = new Laya.Vector3();
+                Laya.Vector3.add(hitPoint, offset1, temp);
+                Laya.Vector3.add(temp, offset2, start);
+                
+                const end = new Laya.Vector3();
+                Laya.Vector3.add(directionEnd, offset1, temp);
+                Laya.Vector3.add(temp, offset2, end);
+
+                if (this.debugLineIndex < this.debugLineRenderer.lineCount) {
+                    this.debugLineRenderer.setLine(this.debugLineIndex, start, end, directionColor, directionColor);
+                } else {
+                    this.debugLineRenderer.addLine(start, end, directionColor, directionColor);
+                }
+                this.debugLineIndex++;
+            }
+        }
+    }
+
     //每帧更新时执行，在update之后执行，尽量不要在这里写大循环逻辑或者使用getComponent方法
     //onLateUpdate(): void {}
 
