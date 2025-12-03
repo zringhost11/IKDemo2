@@ -1,0 +1,78 @@
+{
+  "_$type": "Animator",
+  "enabled": true,
+  "path": "",
+  "cullingMode": 2,
+  "controllerLayers": [
+    {
+      "name": "Base Layer",
+      "states": [
+        {
+          "x": 10,
+          "y": 100,
+          "id": "-1",
+          "name": "进入",
+          "nexts": [],
+          "soloTransitions": [
+            {
+              "id": "0"
+            }
+          ]
+        },
+        {
+          "y": 100,
+          "id": "-2",
+          "name": "任何状态",
+          "x": 484
+        },
+        {
+          "x": 142.83884822884735,
+          "y": 237.61054208415712,
+          "loopState": 0,
+          "_isLooping": 0,
+          "id": "0",
+          "name": "idle",
+          "speed": 1,
+          "clipEnd": 1,
+          "clip": {
+            "_$uuid": "874d55d3-a543-4fbb-9770-3e0f42df8f07"
+          }
+        },
+        {
+          "x": 293.67026896609536,
+          "y": 146.85390178614477,
+          "loopState": 0,
+          "_isLooping": 0,
+          "id": "1",
+          "name": "walk",
+          "speed": 1,
+          "clipEnd": 1,
+          "clip": {
+            "_$uuid": "c59293e5-fc18-43e6-bf23-1b708bea2f96"
+          },
+          "scripts": []
+        },
+        {
+          "x": 303.8176814773056,
+          "y": 232.3054002558036,
+          "loopState": 0,
+          "_isLooping": 0,
+          "id": "3",
+          "name": "run",
+          "speed": 1,
+          "clipEnd": 1,
+          "clip": {
+            "_$uuid": "66ca74df-3fe4-42e7-858f-f26380d38767"
+          }
+        }
+      ],
+      "stageX": 54,
+      "stageY": -16.805271042078573,
+      "stageScale": 1,
+      "playOnWake": true,
+      "blendingMode": 0,
+      "defaultWeight": 1
+    }
+  ],
+  "layerW": 150
+}

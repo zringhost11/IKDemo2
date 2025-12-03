@@ -1,0 +1,27 @@
+{
+    "compilerOptions": {
+        "target": "es2017",
+        "module": "es2022",
+        "baseUrl": "../layaAir",
+        "outDir": "../../bin/tsc/samples",
+        "skipLibCheck": true,
+    },
+    "references": [
+        {
+            "path": "../layaAir"
+        },
+        {
+            "path": "../extensions"
+        }
+    ],
+    "include": [
+        "./**/*",
+        "../layaAir/tslibs",
+        "../../node_modules/@webgpu/types"
+    ],
+    "exclude": [
+        // "./importWebGPU.ts",
+        // "./index_webgpu.ts",
+        // "./webgpu/**/*"
+    ]
+}

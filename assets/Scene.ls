@@ -126,8 +126,8 @@
                 "localPosition": {
                   "_$type": "Vector3",
                   "x": 0.3060738444328308,
-                  "y": -0.056977829655998846,
-                  "z": 3.3276144030585098
+                  "y": -1.6722332387080252,
+                  "z": -0.375314424439825
                 },
                 "localRotation": {
                   "_$type": "Quaternion",
@@ -227,8 +227,14 @@
                 "localPosition": {
                   "_$type": "Vector3",
                   "x": 0.21898388862609863,
-                  "y": 1.7924682882219614,
-                  "z": 5.441051101972086
+                  "y": 0.020113713827241142,
+                  "z": 1.7381222248077393
+                },
+                "localScale": {
+                  "_$type": "Vector3",
+                  "x": 1,
+                  "y": 0.6999997,
+                  "z": 1
                 }
               },
               "_$child": [
@@ -337,7 +343,7 @@
                       "_$type": "Vector3",
                       "x": 0.08299852907657623,
                       "y": -0.2369145154953003,
-                      "z": 2.732066853281235
+                      "z": 3.2570876432926292
                     },
                     "localScale": {
                       "_$type": "Vector3",
@@ -385,7 +391,7 @@
                       "_$type": "Vector3",
                       "x": 0.08299852907657623,
                       "y": -0.45689213275909424,
-                      "z": 2.0501123314063845
+                      "z": 2.3611339563502733
                     },
                     "localScale": {
                       "_$type": "Vector3",
@@ -433,7 +439,7 @@
                       "_$type": "Vector3",
                       "x": 0.08299852907657623,
                       "y": -0.04520010948181152,
-                      "z": 3.4996510056965406
+                      "z": 4.062088848542791
                     },
                     "localScale": {
                       "_$type": "Vector3",
@@ -481,7 +487,7 @@
                       "_$type": "Vector3",
                       "x": 0.08299852907657623,
                       "y": 0.17477750778198242,
-                      "z": 4.201133325091764
+                      "z": 5.002597491976274
                     },
                     "localScale": {
                       "_$type": "Vector3",
@@ -528,8 +534,8 @@
                     "localPosition": {
                       "_$type": "Vector3",
                       "x": 0.08299852907657623,
-                      "y": 0.6062536239624023,
-                      "z": 5.585232381250098
+                      "y": 0.6062536835670471,
+                      "z": 6.838580007739305
                     },
                     "localScale": {
                       "_$type": "Vector3",
@@ -576,8 +582,8 @@
                     "localPosition": {
                       "_$type": "Vector3",
                       "x": 0.08299852907657623,
-                      "y": 0.38627588748931885,
-                      "z": 4.911203861604265
+                      "y": 0.3862758278846741,
+                      "z": 5.933487366353649
                     },
                     "localScale": {
                       "_$type": "Vector3",
@@ -624,8 +630,8 @@
                     "localPosition": {
                       "_$type": "Vector3",
                       "x": 0.08299852907657623,
-                      "y": 0.8108509823298071,
-                      "z": 6.334581043444461
+                      "y": 0.8108509182929993,
+                      "z": 7.81759122986399
                     },
                     "localScale": {
                       "_$type": "Vector3",
@@ -672,8 +678,8 @@
                     "localPosition": {
                       "_$type": "Vector3",
                       "x": 0.08299852907657623,
-                      "y": 1.0308285399889563,
-                      "z": 7.06904527159769
+                      "y": 1.0308285355567932,
+                      "z": 8.799389427365437
                     },
                     "localScale": {
                       "_$type": "Vector3",
@@ -720,8 +726,8 @@
                     "localPosition": {
                       "_$type": "Vector3",
                       "x": 0.08299852907657623,
-                      "y": 1.4623045369600867,
-                      "z": 8.482457484923192
+                      "y": 1.4623046517372131,
+                      "z": 10.387723216834232
                     },
                     "localScale": {
                       "_$type": "Vector3",
@@ -768,8 +774,8 @@
                     "localPosition": {
                       "_$type": "Vector3",
                       "x": 0.08299852907657623,
-                      "y": 1.2423269196962927,
-                      "z": 7.800502862654514
+                      "y": 1.2423270344734192,
+                      "z": 9.655825575939325
                     },
                     "localScale": {
                       "_$type": "Vector3",
@@ -816,8 +822,8 @@
                     "localPosition": {
                       "_$type": "Vector3",
                       "x": 0.08299852907657623,
-                      "y": 1.6540189429735754,
-                      "z": 9.250041570387669
+                      "y": 1.6540187804469753,
+                      "z": 11.305457354932495
                     },
                     "localScale": {
                       "_$type": "Vector3",
@@ -864,8 +870,8 @@
                     "localPosition": {
                       "_$type": "Vector3",
                       "x": 0.08299852907657623,
-                      "y": 1.8739965602373694,
-                      "z": 9.951523866377656
+                      "y": 1.8739964606774464,
+                      "z": 12.30698364306578
                     },
                     "localScale": {
                       "_$type": "Vector3",
@@ -912,8 +918,8 @@
                     "localPosition": {
                       "_$type": "Vector3",
                       "x": 0.08299852907657623,
-                      "y": 2.3054726764177893,
-                      "z": 11.33562287303048
+                      "y": 2.3054724606326147,
+                      "z": 14.321448722831533
                     },
                     "localScale": {
                       "_$type": "Vector3",
@@ -960,8 +966,8 @@
                     "localPosition": {
                       "_$type": "Vector3",
                       "x": 0.08299852907657623,
-                      "y": 2.085494939944706,
-                      "z": 10.661594476424035
+                      "y": 2.085495121000264,
+                      "z": 13.350508896877605
                     },
                     "localScale": {
                       "_$type": "Vector3",
@@ -1011,37 +1017,28 @@
           "transform": {
             "localPosition": {
               "_$type": "Vector3",
-              "z": -5.458611442227972
+              "z": -5.6137450533803515
             }
           },
           "_$comp": [
             {
-              "_$type": "CharacterController",
-              "collisionGroup": 1,
-              "canCollideWith": -1,
-              "centerOffset": {
-                "_$type": "Vector3",
-                "y": 0.994
-              },
-              "stepHeight": 0.52
-            },
-            {
               "_$type": "Animator",
               "controller": {
-                "_$uuid": "09b24967-de80-4b2a-8599-92dbfa487f32",
+                "_$uuid": "9a9566f8-7fd6-4950-86ab-d6a4a3916c53",
                 "_$type": "AnimationController"
               },
               "controllerLayers": [
                 {
                   "_$type": "AnimatorControllerLayer",
                   "name": "Base Layer",
+                  "blendingMode": 1,
                   "states": [
                     {
                       "_$type": "AnimatorState",
-                      "name": "run",
+                      "name": "idle",
                       "clipStart": 0,
                       "clip": {
-                        "_$uuid": "2359ffd3-f79f-4751-b43b-3fca7b0ce778",
+                        "_$uuid": "9387a3ee-1eb2-4e2b-b013-32d63463714a",
                         "_$type": "AnimationClip"
                       },
                       "soloTransitions": []
@@ -1051,17 +1048,7 @@
                       "name": "walk",
                       "clipStart": 0,
                       "clip": {
-                        "_$uuid": "2359ffd3-f79f-4751-b43b-3fca7b0ce778",
-                        "_$type": "AnimationClip"
-                      },
-                      "soloTransitions": []
-                    },
-                    {
-                      "_$type": "AnimatorState",
-                      "name": "idle",
-                      "clipStart": 0,
-                      "clip": {
-                        "_$uuid": "6405bc37-7d29-4c59-94b6-1d61095270ff",
+                        "_$uuid": "825cbaf5-35f8-4719-860f-c2044b16ae70",
                         "_$type": "AnimationClip"
                       },
                       "soloTransitions": []
@@ -1081,9 +1068,7 @@
               "layer": 0,
               "transform": {
                 "localPosition": {
-                  "_$type": "Vector3",
-                  "y": -0.0032129972241818905,
-                  "z": 0.004902362823486328
+                  "_$type": "Vector3"
                 },
                 "localRotation": {
                   "_$type": "Quaternion"
@@ -1099,17 +1084,13 @@
                 {
                   "_$override": "Animator",
                   "controller": {
-                    "_$uuid": "0fb5fc95-d8e8-4e50-ac12-b6ac01804621",
+                    "_$uuid": "5ce7e674-3925-4575-a19c-7f3c17ec2e57",
                     "_$type": "AnimationController"
                   }
                 },
                 {
-                  "_$type": "4670af2c-a27a-4892-bf7a-b953ed36bbce",
-                  "scriptPath": "../src/PersonScript2.ts",
-                  "ikSmoothSpeed": 0.3,
-                  "footHeightOffset": 0,
-                  "maxFootHeightDiff": 0.5,
-                  "raycastDistance": 1.5,
+                  "_$type": "11188e86-7135-4043-a96c-35d2a114a236",
+                  "scriptPath": "../src/PersonScript.ts",
                   "leftBlendWeight": 1,
                   "rightBlendWeight": 1
                 },
@@ -1304,16 +1285,16 @@
                   "transform": {
                     "localPosition": {
                       "_$type": "Vector3",
-                      "x": -0.0009246555877240326,
-                      "y": 6.150608975988916,
-                      "z": -7.518606443199815
+                      "x": -0.003825188930392187,
+                      "y": 6.155330495445469,
+                      "z": -7.512971798283957
                     },
                     "localRotation": {
                       "_$type": "Quaternion",
-                      "x": -1.1031212124139324e-7,
-                      "y": -0.42910345498326524,
-                      "z": -0.9032553486812563,
-                      "w": 3.3926053315258553e-7
+                      "x": -1.1031212107659447e-7,
+                      "y": -0.4291034549832584,
+                      "z": -0.9032553486812593,
+                      "w": 3.392605329166631e-7
                     },
                     "localScale": {
                       "_$type": "Vector3",
@@ -1331,16 +1312,16 @@
                   "transform": {
                     "localPosition": {
                       "_$type": "Vector3",
-                      "x": 0.0016007631029317793,
-                      "y": 6.147773419410669,
-                      "z": -2.9705337546737383
+                      "x": -0.0011857019761691845,
+                      "y": 6.156744403402968,
+                      "z": -2.9658551794776713
                     },
                     "localRotation": {
                       "_$type": "Quaternion",
-                      "x": -1.1478161691946817e-7,
-                      "y": -0.4291034152758728,
-                      "z": -0.9032553675447782,
-                      "w": 3.412529366031424e-7
+                      "x": -1.1478161785621888e-7,
+                      "y": -0.42910341527588247,
+                      "z": -0.9032553675447735,
+                      "w": 3.4125293792153233e-7
                     },
                     "localScale": {
                       "_$type": "Vector3",
@@ -1393,6 +1374,7 @@
                 },
                 {
                   "_$id": "e2qn3b99",
+                  "_$index": 4,
                   "_$type": "Sprite3D",
                   "name": "RightPole",
                   "transform": {
@@ -1430,6 +1412,78 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "_$id": "zsy11edb",
+                  "_$type": "Sprite3D",
+                  "name": "Cube",
+                  "transform": {
+                    "localScale": {
+                      "_$type": "Vector3",
+                      "x": 0.0999958,
+                      "y": 0.1399989,
+                      "z": 0.2099986
+                    }
+                  },
+                  "_$comp": [
+                    {
+                      "_$type": "MeshFilter",
+                      "sharedMesh": {
+                        "_$uuid": "6e013e32-fec7-4397-80d1-f918a07607be",
+                        "_$type": "Mesh"
+                      }
+                    },
+                    {
+                      "_$type": "MeshRenderer",
+                      "lightmapScaleOffset": {
+                        "_$type": "Vector4"
+                      },
+                      "sharedMaterials": [
+                        {
+                          "_$uuid": "caf9967f-a53e-4405-972f-f7fd1960ab3d",
+                          "_$type": "Material"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_$id": "mw7wym0r",
+          "_$type": "Sprite3D",
+          "name": "nextStepPosDebug",
+          "transform": {
+            "localPosition": {
+              "_$type": "Vector3",
+              "z": -4.651163221697334
+            },
+            "localScale": {
+              "_$type": "Vector3",
+              "x": 0.0999958,
+              "y": 0.1399989,
+              "z": 0.2099986
+            }
+          },
+          "_$comp": [
+            {
+              "_$type": "MeshFilter",
+              "sharedMesh": {
+                "_$uuid": "6e013e32-fec7-4397-80d1-f918a07607be",
+                "_$type": "Mesh"
+              }
+            },
+            {
+              "_$type": "MeshRenderer",
+              "lightmapScaleOffset": {
+                "_$type": "Vector4"
+              },
+              "sharedMaterials": [
+                {
+                  "_$uuid": "caf9967f-a53e-4405-972f-f7fd1960ab3d",
+                  "_$type": "Material"
                 }
               ]
             }

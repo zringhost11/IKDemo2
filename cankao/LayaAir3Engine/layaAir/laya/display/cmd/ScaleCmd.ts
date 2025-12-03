@@ -1,0 +1,107 @@
+import { Matrix } from "../../maths/Matrix";
+import { Pool } from "../../utils/Pool"
+import { IGraphicsBoundsAssembler, IGraphicsCmd } from "../IGraphics";
+import { GraphicsRunner } from "../Scene2DSpecial/GraphicsRunner";
+
+const className = "ScaleCmd";
+
+/**
+ * @en Scale command
+ * @zh 缩放命令
+ * @blueprintIgnore
+ */
+export class ScaleCmd implements IGraphicsCmd {
+    /**
+     * @en Identifier for the ScaleCmd
+     * @zh 缩放命令的标识符
+     */
+    static readonly ID: string = className;
+
+    /**
+     * @en Horizontal scaling value.
+     * @zh 水平方向缩放值。
+     */
+    scaleX: number;
+    /**
+     * @en Vertical scaling value.
+     * @zh 垂直方向缩放值。
+     */
+    scaleY: number;
+    /**
+     * @en (Optional) Horizontal axis point coordinates.
+     * @zh （可选）水平方向轴心点坐标。
+     */
+    pivotX: number;
+    /**
+     * @en (Optional) Vertical axis point coordinates.
+     * @zh （可选）垂直方向轴心点坐标。
+     */
+    pivotY: number;
+
+    /**
+     * @en Create a ScaleCmd instance
+     * @param scaleX Horizontal scaling value
+     * @param scaleY Vertical scaling value
+     * @param pivotX Horizontal axis point coordinates
+     * @param pivotY Vertical axis point coordinates
+     * @returns ScaleCmd instance
+     * @zh 创建一个缩放命令实例
+     * @param scaleX 水平方向缩放值
+     * @param scaleY 垂直方向缩放值
+     * @param pivotX 水平方向轴心点坐标
+     * @param pivotY 垂直方向轴心点坐标
+     * @returns 缩放命令实例
+     */
+    static create(scaleX: number, scaleY: number, pivotX: number, pivotY: number): ScaleCmd {
+        var cmd: ScaleCmd = Pool.getItemByClass(className, ScaleCmd);
+        cmd.scaleX = scaleX;
+        cmd.scaleY = scaleY;
+        cmd.pivotX = pivotX;
+        cmd.pivotY = pivotY;
+        return cmd;
+    }
+
+    /**
+     * @en Recycle to the object pool
+     * @zh 回收到对象池
+     */
+    recover(): void {
+        Pool.recover(className, this);
+    }
+
+    /**
+     * @en Execute the scale command
+     * @param runner The rendering context
+     * @param gx Global X offset
+     * @param gy Global Y offset
+     * @zh 执行缩放命令
+     * @param runner 渲染上下文
+     * @param gx 全局X偏移
+     * @param gy 全局Y偏移
+     */
+    run(runner: GraphicsRunner, gx: number, gy: number): void {
+        runner._scale(this.scaleX, this.scaleY, this.pivotX + gx, this.pivotY + gy);
+    }
+
+    /**
+     * @ignore
+     */
+    getBounds(assembler: IGraphicsBoundsAssembler): void {
+        tempMatrix.identity();
+        tempMatrix.translate(-this.pivotX, -this.pivotY);
+        tempMatrix.scale(this.scaleX, this.scaleY);
+        tempMatrix.translate(this.pivotX, this.pivotY);
+        assembler.concatMatrix(tempMatrix);
+    }
+
+    /**
+     * @en The identifier for the ScaleCmd
+     * @zh 缩放命令的标识符
+     */
+    get cmdID(): string {
+        return ScaleCmd.ID;
+    }
+
+}
+
+const tempMatrix = new Matrix();

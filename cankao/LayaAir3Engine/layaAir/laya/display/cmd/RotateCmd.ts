@@ -1,0 +1,99 @@
+import { Matrix } from "../../maths/Matrix";
+import { Pool } from "../../utils/Pool"
+import { IGraphicsBoundsAssembler, IGraphicsCmd } from "../IGraphics";
+import { GraphicsRunner } from "../Scene2DSpecial/GraphicsRunner";
+
+const className = "RotateCmd";
+
+/**
+ * @en Rotate command
+ * @zh 旋转命令
+ * @blueprintIgnore
+ */
+export class RotateCmd implements IGraphicsCmd {
+    /**
+     * @en Identifier for the RotateCmd
+     * @zh 旋转命令的标识符
+     */
+    static readonly ID: string = className;
+
+    /**
+     * @en Rotation angle in radians.
+     * @zh 旋转角度，以弧度计。
+     */
+    angle: number;
+    /**
+     * @en (Optional) Horizontal axis point coordinates.
+     * @zh （可选）水平方向轴心点坐标。
+     */
+    pivotX: number;
+    /**
+     * @en (Optional) Vertical axis point coordinates.
+     * @zh （可选）垂直方向轴心点坐标。
+     */
+    pivotY: number;
+
+    /**
+     * @en Create a RotateCmd instance
+     * @param angle Rotation angle in radians
+     * @param pivotX Horizontal axis point coordinates.
+     * @param pivotY Vertical axis point coordinates.
+     * @returns RotateCmd instance
+     * @zh 创建一个旋转命令实例
+     * @param angle 旋转角度，以弧度计。
+     * @param pivotX 水平方向轴心点坐标。
+     * @param pivotY 垂直方向轴心点坐标。
+     * @returns 旋转命令实例
+     */
+    static create(angle: number, pivotX: number, pivotY: number): RotateCmd {
+        var cmd: RotateCmd = Pool.getItemByClass(className, RotateCmd);
+        cmd.angle = angle;
+        cmd.pivotX = pivotX;
+        cmd.pivotY = pivotY;
+        return cmd;
+    }
+
+    /**
+     * @en Recycle to the object pool
+     * @zh 回收到对象池
+     */
+    recover(): void {
+        Pool.recover(className, this);
+    }
+
+    /**
+     * @en Execute the rotate command
+     * @param runner The rendering context
+     * @param gx Global X offset
+     * @param gy Global Y offset
+     * @zh 执行旋转命令
+     * @param runner 渲染上下文
+     * @param gx 全局X偏移
+     * @param gy 全局Y偏移
+     */
+    run(runner: GraphicsRunner, gx: number, gy: number): void {
+        runner._rotate(this.angle, this.pivotX + gx, this.pivotY + gy);
+    }
+
+    /**
+     * @ignore
+     */
+    getBounds(assembler: IGraphicsBoundsAssembler): void {
+        tempMatrix.identity();
+        tempMatrix.translate(-this.pivotX, -this.pivotY);
+        tempMatrix.rotate(this.angle);
+        tempMatrix.translate(this.pivotX, this.pivotY);
+        assembler.concatMatrix(tempMatrix);
+    }
+
+    /**
+     * @en The identifier for the RotateCmd
+     * @zh 旋转命令的标识符
+     */
+    get cmdID(): string {
+        return RotateCmd.ID;
+    }
+
+}
+
+const tempMatrix = new Matrix();

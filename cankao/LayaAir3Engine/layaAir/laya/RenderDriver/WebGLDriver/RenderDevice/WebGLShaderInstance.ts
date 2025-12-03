@@ -1,0 +1,500 @@
+
+import { CullMode } from "../../../RenderEngine/RenderEnum/CullMode";
+import { GLSLCodeGenerator } from "../../../RenderEngine/RenderShader/GLSLCodeGenerator";
+import { Shader3D } from "../../../RenderEngine/RenderShader/Shader3D";
+import { ShaderPass } from "../../../RenderEngine/RenderShader/ShaderPass";
+import { ShaderVariable } from "../../../RenderEngine/RenderShader/ShaderVariable";
+import { CommandEncoder } from "../../../layagl/CommandEncoder";
+import { LayaGL } from "../../../layagl/LayaGL";
+import { ShaderProcessInfo } from "../../../webgl/utils/ShaderCompileDefineBase";
+import { IShaderInstance } from "../../DriverDesign/RenderDevice/IShaderInstance";
+import { RenderState } from "../../RenderModuleData/Design/RenderState";
+import { ShaderData } from "../../DriverDesign/RenderDevice/ShaderData";
+import { WebGLCommandUniformMap } from "./WebGLCommandUniformMap";
+import { WebGLEngine } from "./WebGLEngine";
+import { GLShaderInstance } from "./WebGLEngine/GLShaderInstance";
+import { WebGLShaderData } from "../../RenderModuleData/WebModuleData/WebGLShaderData";
+import { Config } from "../../../../Config";
+import { WebGLRenderContext3D } from "../3DRenderPass/WebGLRenderContext3D";
+import { WebShaderPass } from "../../RenderModuleData/WebModuleData/WebShaderPass";
+
+/**
+ * <code>ShaderInstance</code> 类用于实现ShaderInstance。
+ */
+export class WebGLShaderInstance implements IShaderInstance {
+    /**@internal */
+    private _shaderPass: WebShaderPass;
+    /**@internal */
+    _cacheShaerVariable: { [key: number]: ShaderVariable } = {};
+
+    /**@internal */
+    _renderShaderInstance: GLShaderInstance;
+
+    /**@internal */
+    _sceneUniformParamsMap: CommandEncoder;//2D pass
+    /**@internal */
+    _cameraUniformParamsMap: CommandEncoder;//global
+    /**@internal */
+    _spriteUniformParamsMap: CommandEncoder;
+    /**@internal */
+    _materialUniformParamsMap: CommandEncoder;
+    /**@internal */
+    _sprite2DUniformParamsMap: CommandEncoder;
+
+    _additionUniformParamsMaps: Map<string, CommandEncoder>;
+
+    /**@internal */
+    _uploadMark: number = -1;
+    /**@internal */
+    _uploadMaterial: ShaderData;
+    /**@internal RenderIDTODO*/
+    _uploadRender: ShaderData;
+    /** @internal */
+    _uploadRenderType: number = -1;
+    /**@internal CamneraTOD*/
+    _uploadCameraShaderValue: ShaderData;
+    /**@internal SceneIDTODO*/
+    _uploadScene: ShaderData;
+
+    /** @internal 缓存数据 用来优化一些*/
+    _additionShaderData: Map<string, ShaderData>;
+
+    /**
+     * 创建一个 <code>ShaderInstance</code> 实例。
+     */
+    constructor() {
+        this._additionUniformParamsMaps = new Map();
+        this._additionShaderData = new Map();
+    }
+    _serializeShader(): ArrayBuffer {
+        //TODO
+        return null
+    }
+    _deserialize(buffer: ArrayBuffer): boolean {
+        //TODO
+        return false;
+    }
+
+    /**
+     * get complete
+     */
+    get complete(): boolean {
+        return this._renderShaderInstance._complete;
+    }
+
+    _create(shaderProcessInfo: ShaderProcessInfo, shaderPass: ShaderPass): void {
+        let useMaterial = Config.matUseUBO;//TODO 临时解决2D Mat
+        Config.matUseUBO = (!shaderProcessInfo.is2D) && Config.matUseUBO;
+
+        let shaderObj = GLSLCodeGenerator.GLShaderLanguageProcess3D(shaderProcessInfo.defineString, shaderProcessInfo.attributeMap, shaderProcessInfo.uniformMap, shaderProcessInfo.vs, shaderProcessInfo.ps);
+        this._renderShaderInstance = WebGLEngine.instance.createShaderInstance(shaderObj.vs, shaderObj.fs, shaderProcessInfo.attributeMap);
+        Config.matUseUBO = useMaterial;
+        if (WebGLEngine._lastShaderError) {
+            console.warn(`[ShaderCompile]Error compiling shader '${shaderPass._owner._owner.name}' (pipelineMode=${shaderPass.pipelineMode})\n`,
+                WebGLEngine._lastShaderError);
+        }
+
+        if (this._renderShaderInstance._complete) {
+            this._shaderPass = shaderPass.moduleData as WebShaderPass;
+            shaderProcessInfo.is2D ? this._create2D() : this._create3D();
+        }
+    }
+
+    /**
+     * @internal
+     */
+    protected _create3D(): void {
+        this._sceneUniformParamsMap = new CommandEncoder();
+        this._cameraUniformParamsMap = new CommandEncoder();
+        this._spriteUniformParamsMap = new CommandEncoder();
+        this._materialUniformParamsMap = new CommandEncoder();
+
+        let context = WebGLRenderContext3D._instance;
+
+        let preDrawUniforms = context.preDrawUniformMaps;
+        let preDrawParams = [];
+        for (let key of preDrawUniforms) {
+            let params = LayaGL.renderDeviceFactory.createGlobalUniformMap(key) as WebGLCommandUniformMap;
+            preDrawParams.push(params);
+        }
+
+        const cameraParams = LayaGL.renderDeviceFactory.createGlobalUniformMap("BaseCamera") as WebGLCommandUniformMap;
+
+        let i, n;
+        let data: ShaderVariable[] = this._renderShaderInstance.getUniformMap();
+        for (i = 0, n = data.length; i < n; i++) {
+            let one: ShaderVariable = data[i];
+            if (preDrawParams.find((params) => {
+                return params.hasPtrID(one.dataOffset);
+            })) {
+                this._sceneUniformParamsMap.addShaderUniform(one);
+            } else if (cameraParams.hasPtrID(one.dataOffset)) {
+                this._cameraUniformParamsMap.addShaderUniform(one);
+            } else if (this.hasSpritePtrID(one.dataOffset)) {
+                this._spriteUniformParamsMap.addShaderUniform(one);
+            } else if (this._hasAdditionShaderData(one.dataOffset)) {
+                let str = this._hasAdditionShaderData(one.dataOffset);
+                if (!this._additionUniformParamsMaps.get(str)) {
+                    let commandEncoder = new CommandEncoder();
+                    this._additionUniformParamsMaps.set(str, commandEncoder);
+                }
+                this._additionUniformParamsMaps.get(str).addShaderUniform(one);
+            } else {
+                this._materialUniformParamsMap.addShaderUniform(one);
+            }
+        }
+    }
+
+    /**
+     * @internal
+     */
+    protected _create2D(): void {
+        this._sprite2DUniformParamsMap = new CommandEncoder();
+        this._materialUniformParamsMap = new CommandEncoder();
+        this._sceneUniformParamsMap = new CommandEncoder();
+        this._cameraUniformParamsMap = new CommandEncoder();
+        //const sprite2DParms = LayaGL.renderDeviceFactory.createGlobalUniformMap("Sprite2D") as WebGLCommandUniformMap;//分开，根据不同的Render
+        const passParms = LayaGL.renderDeviceFactory.createGlobalUniformMap("Sprite2DPass") as WebGLCommandUniformMap;//分开，根据不同的Render
+        const globalParams = LayaGL.renderDeviceFactory.createGlobalUniformMap("Sprite2DGlobal") as WebGLCommandUniformMap;
+
+        let i, n;
+        let data: ShaderVariable[] = this._renderShaderInstance.getUniformMap();
+        for (i = 0, n = data.length; i < n; i++) {
+            let one: ShaderVariable = data[i];
+            if (this.hasSpritePtrID(one.dataOffset)) {
+                this._sprite2DUniformParamsMap.addShaderUniform(one);
+            }
+            else if (passParms.hasPtrID(one.dataOffset)) {
+                this._sceneUniformParamsMap.addShaderUniform(one);
+            }
+            else if (globalParams.hasPtrID(one.dataOffset)) {
+                this._cameraUniformParamsMap.addShaderUniform(one);
+            }
+            else if (this._hasAdditionShaderData(one.dataOffset)) {
+                let str = this._hasAdditionShaderData(one.dataOffset);
+                if (!this._additionUniformParamsMaps.get(str)) {
+                    let commandEncoder = new CommandEncoder();
+                    this._additionUniformParamsMaps.set(str, commandEncoder);
+                }
+                this._additionUniformParamsMaps.get(str).addShaderUniform(one);
+            }
+            else {
+                this._materialUniformParamsMap.addShaderUniform(one);
+            }
+        }
+    }
+
+    private hasSpritePtrID(dataOffset: number): boolean {
+        let commap = this._shaderPass.nodeCommonMap;
+        if (!commap) {
+            return false;
+        } else {
+            for (let i = 0, n = commap.length; i < n; i++) {
+                if ((LayaGL.renderDeviceFactory.createGlobalUniformMap(commap[i]) as WebGLCommandUniformMap).hasPtrID(dataOffset))
+                    return true;
+            }
+            return false;
+        }
+    }
+
+    private _hasAdditionShaderData(dataOffset: number): string {
+        let additionShaderData = this._shaderPass.additionShaderData;
+        if (!additionShaderData) {
+            return null;
+        } else {
+            for (let i = 0, n = additionShaderData.length; i < n; i++) {
+                if ((LayaGL.renderDeviceFactory.createGlobalUniformMap(additionShaderData[i]) as WebGLCommandUniformMap).hasPtrID(dataOffset))
+                    return additionShaderData[i];
+            }
+        }
+        return null;
+    }
+
+    /**
+     * @inheritDoc
+     * @override
+     */
+    _disposeResource(): void {
+        this._renderShaderInstance.destroy();
+        this._sceneUniformParamsMap = null;
+        this._cameraUniformParamsMap = null;
+        this._spriteUniformParamsMap = null;
+        this._materialUniformParamsMap = null;
+        this._sprite2DUniformParamsMap = null;
+
+        this._uploadMaterial = null;
+        this._uploadRender = null;
+        this._uploadCameraShaderValue = null;
+        this._uploadScene = null;
+        this._additionShaderData = null;
+    }
+
+    /**
+     * apply shader programe
+     * @returns 
+     */
+    bind() {
+        return this._renderShaderInstance.bind();
+    }
+
+    /**
+     * upload uniform data
+     * @param shaderUniform 
+     * @param shaderDatas 
+     * @param uploadUnTexture 
+     */
+    uploadUniforms(shaderUniform: CommandEncoder, shaderDatas: WebGLShaderData, uploadUnTexture: boolean) {
+        WebGLEngine.instance.uploadUniforms(this._renderShaderInstance, shaderUniform, shaderDatas, uploadUnTexture);
+    }
+
+    /**
+     * set blend depth stencil RenderState
+     * @param shaderDatas 
+     */
+    uploadRenderStateBlendDepth(shaderDatas: WebGLShaderData): void {
+        if ((this._shaderPass).statefirst)
+            this.uploadRenderStateBlendDepthByShader(shaderDatas);
+        else
+            this.uploadRenderStateBlendDepthByMaterial(shaderDatas);
+    }
+
+    /**
+     * set blend depth stencil RenderState frome Shader
+     * @param shaderDatas 
+     */
+    uploadRenderStateBlendDepthByShader(shaderDatas: WebGLShaderData) {
+
+        const engineRenderState = WebGLEngine.instance._GLRenderState;
+
+        var datas: any = shaderDatas._data;
+        var renderState: RenderState = (this._shaderPass).renderState;
+        var depthWrite: any = (renderState.depthWrite ?? datas[Shader3D.DEPTH_WRITE]) ?? RenderState.Default.depthWrite;
+        engineRenderState.setDepthMask(depthWrite);
+        var depthTest: any = (renderState.depthTest ?? datas[Shader3D.DEPTH_TEST]) ?? RenderState.Default.depthTest;
+        if (depthTest == RenderState.DEPTHTEST_OFF)
+            engineRenderState.setDepthTest(false);
+        else {
+            engineRenderState.setDepthTest(true);
+            engineRenderState.setDepthFunc(depthTest);
+        }
+        //Stencil
+        var stencilWrite: boolean = (renderState.stencilWrite ?? datas[Shader3D.STENCIL_WRITE]) ?? RenderState.Default.stencilWrite;
+        engineRenderState.setStencilWrite(stencilWrite);
+
+        let stencilWriteMask = stencilWrite ? ((renderState.stencilWriteMask ?? datas[Shader3D.STENCIL_WRITE_MASK]) ?? RenderState.Default.stencilWriteMask) : 0x00;
+        engineRenderState.setStencilWriteMask(stencilWriteMask);
+        if (stencilWrite) {
+            var stencilOp: any = (renderState.stencilOp ?? datas[Shader3D.STENCIL_Op]) ?? RenderState.Default.stencilOp;
+            engineRenderState.setstencilOp(stencilOp.x, stencilOp.y, stencilOp.z);
+        }
+
+        var stencilTest: any = (renderState.stencilTest ?? datas[Shader3D.STENCIL_TEST]) ?? RenderState.Default.stencilTest;
+        if (stencilTest == RenderState.STENCILTEST_OFF) {
+            engineRenderState.setStencilTest(false);
+        }
+        else {
+            engineRenderState.setStencilTest(true);
+            var stencilRef: any = (renderState.stencilRef ?? datas[Shader3D.STENCIL_Ref]) ?? RenderState.Default.stencilRef;
+            let stencilReadMask = (renderState.stencilReadMask ?? datas[Shader3D.STENCIL_READ_MASK]) ?? RenderState.Default.stencilReadMask;
+            engineRenderState.setStencilFunc(stencilTest, stencilRef, stencilReadMask);
+        }
+
+        // depth bias
+        let depthBias = renderState.depthBias ?? datas[Shader3D.DEPTH_BIAS] ?? RenderState.Default.depthBias;
+        engineRenderState.setDepthBias(depthBias);
+        if (depthBias) {
+            let depthBiasConstant = (renderState.depthBiasConstant ?? datas[Shader3D.DEPTH_BIAS_CONSTANT]) ?? RenderState.Default.depthBiasConstant;
+            let depthBiasSlopeScale = (renderState.depthBiasSlopeScale ?? datas[Shader3D.DEPTH_BIAS_SLOPESCALE]) ?? RenderState.Default.depthBiasSlopeScale;
+            let depthBiasClamp = (renderState.depthBiasClamp ?? datas[Shader3D.DEPTH_BIAS_CLAMP]) ?? RenderState.Default.depthBiasClamp;
+            engineRenderState.setDepthBiasFactor(depthBiasConstant, depthBiasSlopeScale, depthBiasClamp);
+        }
+
+        //blend
+        var blend: any = (renderState.blend ?? datas[Shader3D.BLEND]) ?? RenderState.Default.blend;
+        switch (blend) {
+            case RenderState.BLEND_DISABLE:
+                engineRenderState.setBlend(false);
+                break;
+            case RenderState.BLEND_ENABLE_ALL:
+                var blendEquation: any = (renderState.blendEquation ?? datas[Shader3D.BLEND_EQUATION]) ?? RenderState.Default.blendEquation;
+                var srcBlend: any = (renderState.srcBlend ?? datas[Shader3D.BLEND_SRC]) ?? RenderState.Default.srcBlend;
+                var dstBlend: any = (renderState.dstBlend ?? datas[Shader3D.BLEND_DST]) ?? RenderState.Default.dstBlend;
+                engineRenderState.setBlend(true);
+                engineRenderState.setBlendEquation(blendEquation);
+                engineRenderState.setBlendFunc(srcBlend, dstBlend);
+                break;
+            case RenderState.BLEND_ENABLE_SEPERATE:
+                var blendEquationRGB: any = (renderState.blendEquationRGB ?? datas[Shader3D.BLEND_EQUATION_RGB]) ?? RenderState.Default.blendEquationRGB;
+                var blendEquationAlpha: any = (renderState.blendEquationAlpha ?? datas[Shader3D.BLEND_EQUATION_ALPHA]) ?? RenderState.Default.blendEquationAlpha;
+                var srcRGB: any = (renderState.srcBlendRGB ?? datas[Shader3D.BLEND_SRC_RGB]) ?? RenderState.Default.srcBlendRGB;
+                var dstRGB: any = (renderState.dstBlendRGB ?? datas[Shader3D.BLEND_DST_RGB]) ?? RenderState.Default.dstBlendRGB;
+                var srcAlpha: any = (renderState.srcBlendAlpha ?? datas[Shader3D.BLEND_SRC_ALPHA]) ?? RenderState.Default.srcBlendAlpha;
+                var dstAlpha: any = (renderState.dstBlendAlpha ?? datas[Shader3D.BLEND_DST_ALPHA]) ?? RenderState.Default.dstBlendAlpha;
+                engineRenderState.setBlend(true);
+                engineRenderState.setBlendEquationSeparate(blendEquationRGB, blendEquationAlpha);
+                engineRenderState.setBlendFuncSeperate(srcRGB, dstRGB, srcAlpha, dstAlpha);
+                break;
+        }
+    }
+
+    /**
+     * set blend depth stencil RenderState frome Material
+     * @param shaderDatas 
+     */
+    uploadRenderStateBlendDepthByMaterial(shaderDatas: ShaderData) {
+
+        const engineRenderState = WebGLEngine.instance._GLRenderState;
+
+        var datas: any = shaderDatas.getData();
+
+        // depth
+        var depthWrite: any = datas[Shader3D.DEPTH_WRITE];
+        depthWrite = depthWrite ?? RenderState.Default.depthWrite;
+        engineRenderState.setDepthMask(depthWrite);
+
+        var depthTest: any = datas[Shader3D.DEPTH_TEST];
+        depthTest = depthTest ?? RenderState.Default.depthTest;
+        if (depthTest === RenderState.DEPTHTEST_OFF) {
+            engineRenderState.setDepthTest(false);
+        }
+        else {
+            engineRenderState.setDepthTest(true);
+            engineRenderState.setDepthFunc(depthTest);
+        }
+
+        //Stencil
+        var stencilWrite: boolean = datas[Shader3D.STENCIL_WRITE];
+        stencilWrite = stencilWrite ?? RenderState.Default.stencilWrite;
+        engineRenderState.setStencilWrite(stencilWrite);
+
+        let stencilWriteMask: number = stencilWrite ? (datas[Shader3D.STENCIL_WRITE_MASK] ?? RenderState.Default.stencilWriteMask) : 0x00;
+        engineRenderState.setStencilWriteMask(stencilWriteMask);
+        if (stencilWrite) {
+            var stencilOp: any = datas[Shader3D.STENCIL_Op];
+            stencilOp = stencilOp ?? RenderState.Default.stencilOp;
+            engineRenderState.setstencilOp(stencilOp.x, stencilOp.y, stencilOp.z);
+        }
+
+        var stencilTest: any = datas[Shader3D.STENCIL_TEST];
+        stencilTest = stencilTest ?? RenderState.Default.stencilTest;
+        if (stencilTest == RenderState.STENCILTEST_OFF) {
+            engineRenderState.setStencilTest(false);
+        }
+        else {
+            let stencilReadMask: any = datas[Shader3D.STENCIL_READ_MASK] ?? RenderState.Default.stencilReadMask;
+            var stencilRef: any = datas[Shader3D.STENCIL_Ref];
+            stencilRef = stencilRef ?? RenderState.Default.stencilRef;
+            engineRenderState.setStencilTest(true);
+            engineRenderState.setStencilFunc(stencilTest, stencilRef, stencilReadMask);
+        }
+
+        // depth bias
+        let depthBias = datas[Shader3D.DEPTH_BIAS] ?? RenderState.Default.depthBias;
+        engineRenderState.setDepthBias(depthBias);
+        if (depthBias) {
+            let depthBiasConstant = datas[Shader3D.DEPTH_BIAS_CONSTANT];
+            depthBiasConstant = depthBiasConstant ?? RenderState.Default.depthBiasConstant;
+            let depthBiasSlopeScale = datas[Shader3D.DEPTH_BIAS_SLOPESCALE];
+            depthBiasSlopeScale = depthBiasSlopeScale ?? RenderState.Default.depthBiasSlopeScale;
+            let depthBiasClamp = datas[Shader3D.DEPTH_BIAS_CLAMP];
+            depthBiasClamp = depthBiasClamp ?? RenderState.Default.depthBiasClamp;
+            engineRenderState.setDepthBiasFactor(depthBiasConstant, depthBiasSlopeScale, depthBiasClamp);
+        }
+
+        //blend
+        var blend: any = datas[Shader3D.BLEND];
+        blend = blend ?? RenderState.Default.blend;
+        switch (blend) {
+            case RenderState.BLEND_ENABLE_ALL:
+                var blendEquation: any = datas[Shader3D.BLEND_EQUATION];
+                blendEquation = blendEquation ?? RenderState.Default.blendEquation;
+                var srcBlend: any = datas[Shader3D.BLEND_SRC];
+                srcBlend = srcBlend ?? RenderState.Default.srcBlend;
+                var dstBlend: any = datas[Shader3D.BLEND_DST];
+                dstBlend = dstBlend ?? RenderState.Default.dstBlend;
+                engineRenderState.setBlend(true);
+                engineRenderState.setBlendEquation(blendEquation);
+                engineRenderState.setBlendFunc(srcBlend, dstBlend);
+                break;
+            case RenderState.BLEND_ENABLE_SEPERATE:
+                var blendEquationRGB: any = datas[Shader3D.BLEND_EQUATION_RGB];
+                blendEquationRGB = blendEquationRGB ?? RenderState.Default.blendEquationRGB;
+
+                var blendEquationAlpha: any = datas[Shader3D.BLEND_EQUATION_ALPHA];
+                blendEquationAlpha = blendEquationAlpha ?? RenderState.Default.blendEquationAlpha;
+
+                var srcRGB: any = datas[Shader3D.BLEND_SRC_RGB];
+                srcRGB = srcRGB ?? RenderState.Default.srcBlendRGB;
+
+                var dstRGB: any = datas[Shader3D.BLEND_DST_RGB];
+                dstRGB = dstRGB ?? RenderState.Default.dstBlendRGB;
+
+                var srcAlpha: any = datas[Shader3D.BLEND_SRC_ALPHA];
+                srcAlpha = srcAlpha ?? RenderState.Default.srcBlendAlpha;
+
+                var dstAlpha: any = datas[Shader3D.BLEND_DST_ALPHA];
+                dstAlpha = dstAlpha ?? RenderState.Default.dstBlendAlpha;
+
+                engineRenderState.setBlend(true);
+                engineRenderState.setBlendEquationSeparate(blendEquationRGB, blendEquationAlpha);
+                engineRenderState.setBlendFuncSeperate(srcRGB, dstRGB, srcAlpha, dstAlpha);
+                break;
+            case RenderState.BLEND_DISABLE:
+            default:
+                engineRenderState.setBlend(false);
+                break;
+        }
+    }
+
+
+    /**
+     * @internal
+     */
+    uploadRenderStateFrontFace(shaderDatas: ShaderData, isTarget: boolean, invertFront: boolean): void {
+        const engineRenderState = WebGLEngine.instance._GLRenderState;
+
+        var renderState: RenderState = (this._shaderPass).renderState;
+        var datas: any = shaderDatas.getData();
+        var cull: any = datas[Shader3D.CULL];
+        if ((this._shaderPass).statefirst) {
+            cull = renderState.cull ?? cull;
+        }
+        cull = cull ?? RenderState.Default.cull;
+        var forntFace: number;
+        switch (cull) {
+            case RenderState.CULL_NONE:
+                engineRenderState.setCullFace(false);
+                if (isTarget != invertFront)
+                    forntFace = CullMode.Front;//gl.CCW
+                else
+                    forntFace = CullMode.Back;
+                engineRenderState.setFrontFace(forntFace);
+                break;
+            case RenderState.CULL_FRONT:
+                engineRenderState.setCullFace(true);
+                if (isTarget == invertFront)
+                    forntFace = CullMode.Front;//gl.CCW
+                else
+                    forntFace = CullMode.Back;
+                engineRenderState.setFrontFace(forntFace);
+                break;
+            case RenderState.CULL_BACK:
+            default:
+                engineRenderState.setCullFace(true);
+                if (isTarget != invertFront)
+                    forntFace = CullMode.Front;//gl.CCW
+                else
+                    forntFace = CullMode.Back;
+                engineRenderState.setFrontFace(forntFace);
+                break;
+        }
+    }
+
+    // /**
+    //  * @internal
+    //  */
+    // uploadCustomUniform(index: number, data: any): void {
+    //     WebGLEngine.instance.uploadCustomUniforms(this._renderShaderInstance, this._customUniformParamsMap, index, data);
+    // }
+}
+

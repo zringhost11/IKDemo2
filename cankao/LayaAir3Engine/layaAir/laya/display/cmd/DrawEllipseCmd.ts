@@ -1,0 +1,150 @@
+import { Rectangle } from "../../maths/Rectangle";
+import { ClassUtils } from "../../utils/ClassUtils";
+import { Pool } from "../../utils/Pool";
+import { IGraphicsBoundsAssembler, IGraphicsCmd } from "../IGraphics";
+import { GraphicsRunner } from "../Scene2DSpecial/GraphicsRunner";
+
+const className = "DrawEllipseCmd";
+
+/**
+ * @en Draw ellipse command
+ * @zh 绘制椭圆命令
+ */
+export class DrawEllipseCmd implements IGraphicsCmd {
+    /**
+     * @en Identifier for the DrawEllipseCmd
+     * @zh 绘制椭圆命令的标识符
+     */
+    static readonly ID: string = className;
+    /**
+     * @en X-axis position of the ellipse center
+     * @zh 椭圆中心点X轴位置
+     */
+    x: number;
+    /**
+     * @en Y-axis position of the ellipse center
+     * @zh 椭圆中心点Y轴位置
+     */
+    y: number;
+    /**
+     * @en Horizontal radius of the ellipse
+     * @zh 椭圆的横向半径
+     */
+    width: number;
+    /**
+     * @en Vertical radius of the ellipse
+     * @zh 椭圆的纵向半径
+     */
+    height: number;
+    /**
+     * @en Fill color
+     * @zh 填充颜色
+     */
+    fillColor: any;
+    /**
+     * @en (Optional) Border color
+     * @zh （可选）边框颜色
+     */
+    lineColor: any;
+    /**
+     * @en (Optional) Border width
+     * @zh （可选）边框宽度
+     */
+    lineWidth: number = 0;
+
+    /**
+     * @en Whether the position and size are percentages
+     * @zh 位置和大小是否是百分比
+     */
+    percent: boolean;
+
+
+    /**
+     * @en Create a DrawEllipseCmd instance
+     * @param x X-axis position of the ellipse center
+     * @param y Y-axis position of the ellipse center
+     * @param width Horizontal radius of the ellipse
+     * @param height Vertical radius of the ellipse
+     * @param fillColor Fill color
+     * @param lineColor Border color
+     * @param lineWidth Border width
+     * @param percent Whether the position and size are percentages
+     * @returns A DrawEllipseCmd instance
+     * @zh 创建一个绘制椭圆命令的实例
+     * @param x 椭圆中心点X轴位置
+     * @param y 椭圆中心点Y轴位置
+     * @param width 椭圆的横向半径
+     * @param height 椭圆的纵向半径
+     * @param fillColor 填充颜色
+     * @param lineColor 边框颜色
+     * @param lineWidth 边框宽度
+     * @param percent 位置和大小是否是百分比
+     * @returns DrawEllipseCmd实例
+     */
+    static create(x: number, y: number, width: number, height: number, fillColor: any, lineColor: any, lineWidth: number, percent?: boolean): DrawEllipseCmd {
+        var cmd = Pool.getItemByClass(className, DrawEllipseCmd);
+        cmd.x = x;
+        cmd.y = y;
+        cmd.width = width;
+        cmd.height = height;
+        cmd.fillColor = fillColor;
+        cmd.lineColor = lineColor;
+        cmd.lineWidth = lineWidth;
+        cmd.percent = percent;
+        return cmd;
+    }
+
+    /**
+     * @en Recycle the instance to the object pool
+     * @zh 将实例回收到对象池
+     */
+    recover(): void {
+        this.fillColor = null;
+        this.lineColor = null;
+        Pool.recover(className, this);
+    }
+
+    /**
+     * @en Execute the draw ellipse command
+     * @param runner The rendering context
+     * @param gx Global X offset
+     * @param gy Global Y offset
+     * @zh 执行绘制椭圆命令
+     * @param runner 渲染上下文
+     * @param gx 全局X偏移
+     * @param gy 全局Y偏移
+     */
+    run(runner: GraphicsRunner, gx: number, gy: number): void {
+        let offset = (this.lineWidth >= 1 && this.lineColor) ? this.lineWidth / 2 : 0;
+        if (this.percent && runner.sprite) {
+            let w = runner.sprite.width;
+            let h = runner.sprite.height;
+            runner._drawEllipse(this.x * w + gx, this.y * h + gy, this.width * w - offset, this.height * h - offset, this.fillColor, this.lineColor, this.lineWidth);
+        }
+        else {
+            runner._drawEllipse(this.x + gx, this.y + gy, this.width - offset, this.height - offset, this.fillColor, this.lineColor, this.lineWidth);
+        }
+    }
+
+    /**
+     * @en The identifier for the DrawEllipseCmd
+     * @zh 绘制椭圆命令的标识符
+     */
+    get cmdID(): string {
+        return DrawEllipseCmd.ID;
+    }
+
+    /**
+     * @ignore
+     */
+    getBounds(assembler: IGraphicsBoundsAssembler): void {
+        let rect = Rectangle.TEMP.setTo(this.x - this.width, this.y - this.height, this.width * 2, this.height * 2);
+        if (this.percent) {
+            rect.scale(assembler.width, assembler.height);
+        }
+        rect.getBoundPoints(assembler.points);
+    }
+
+}
+
+ClassUtils.regClass(className, DrawEllipseCmd);

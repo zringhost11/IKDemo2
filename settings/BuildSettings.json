@@ -1,4 +1,13 @@
 {
   "name": "LayaProject3",
-  "startupScene": "res://9b931ecf-fde9-44dd-acf3-15f8dc807965"
+  "startupScene": "res://0af42b93-bcd4-44d7-b710-25fd47f91dd9",
+  "android": {
+    "targetArchitectures": {
+      "ARMv7": false,
+      "ARM64": true,
+      "x86": false,
+      "x86-64": false
+    },
+    "exportFormat": "APK"
+  }
 }

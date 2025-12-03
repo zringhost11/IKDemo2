@@ -1,0 +1,54 @@
+import { Pool } from "../../utils/Pool"
+import { IGraphicsCmd } from "../IGraphics";
+import { GraphicsRunner } from "../Scene2DSpecial/GraphicsRunner";
+
+const className = "RestoreCmd";
+
+/**
+ * @en Restore command, used in conjunction with save
+ * @zh 恢复命令，与save配套使用
+ * @blueprintIgnore
+ */
+export class RestoreCmd implements IGraphicsCmd {
+    /**
+     * @en Identifier for the RestoreCmd
+     * @zh 恢复命令的标识符
+     */
+    static readonly ID: string = className;
+
+    /**
+     * @en Create a RestoreCmd instance
+     * @returns RestoreCmd instance
+     * @zh 创建一个恢复命令实例
+     * @returns 恢复命令实例
+     */
+    static create(): RestoreCmd {
+        return Pool.getItemByClass(className, RestoreCmd);
+    }
+
+    /**
+     * @en Recycle to the object pool
+     * @zh 回收到对象池
+     */
+    recover(): void {
+        Pool.recover(className, this);
+    }
+
+    /**
+     * @en Execute the restore command
+     * @param runner The rendering context
+     * @zh 执行恢复命令
+     * @param runner 渲染上下文
+     */
+    run(runner: GraphicsRunner): void {
+        runner.restore();
+    }
+
+    /**
+     * @en The identifier for the RestoreCmd
+     * @zh 恢复命令的标识符
+     */
+    get cmdID(): string {
+        return RestoreCmd.ID;
+    }
+}

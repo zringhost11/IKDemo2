@@ -1,0 +1,165 @@
+import { Point } from "../../maths/Point"
+import { Rectangle } from "../../maths/Rectangle";
+import { Texture } from "../../resource/Texture"
+import { ClassUtils } from "../../utils/ClassUtils";
+import { ColorUtils } from "../../utils/ColorUtils";
+import { Pool } from "../../utils/Pool";
+import { IGraphicsBoundsAssembler, IGraphicsCmd } from "../IGraphics";
+import { GraphicsRunner } from "../Scene2DSpecial/GraphicsRunner";
+
+const className = "FillTextureCmd";
+
+/**
+ * @en Fill texture command
+ * @zh 填充贴图命令
+ */
+export class FillTextureCmd implements IGraphicsCmd {
+    /**
+     * @en Identifier for the FillTextureCmd
+     * @zh 填充贴图命令的标识符
+     */
+    static readonly ID: string = className;
+
+    /**
+     * @en The texture to be filled.
+     * @zh 要填充的纹理。
+     */
+    texture: Texture;
+    /**
+     * @en X-axis offset.
+     * @zh X轴偏移量。
+     */
+    x: number = 0;
+    /**
+     * @en Y-axis offset.
+     * @zh Y轴偏移量。
+     */
+    y: number = 0;
+    /**
+     * @en (Optional) Width of the filled area.
+     * @zh （可选）填充区域的宽度。
+     */
+    width: number = 1;
+    /**
+     * @en (Optional) Height of the filled area.
+     * @zh （可选）填充区域的高度。
+     */
+    height: number = 1;
+    /**
+     * @en (Optional) Fill type: repeat|repeat-x|repeat-y|no-repeat
+     * @zh （可选）填充类型：repeat|repeat-x|repeat-y|no-repeat
+     */
+    type: string = "repeat";
+    /**
+     * @en (Optional) Texture offset
+     * @zh （可选）贴图纹理偏移
+     */
+    offset?: Point;
+
+    /**
+     * @en Whether the position and size are percentages
+     * @zh 位置和大小是否是百分比
+     */
+    percent: boolean = true;
+
+    /**
+     * @en (Optional) Drawing color
+     * @zh （可选）绘图颜色
+     */
+    color: number = 0xffffffff;
+
+    /**
+     * @en Create a FillTextureCmd instance
+     * @param texture The texture to be filled
+     * @param x X-axis offset
+     * @param y Y-axis offset
+     * @param width Width of the filled area
+     * @param height Height of the filled area
+     * @param type Fill type
+     * @param offset Texture offset
+     * @param color Drawing color
+     * @returns FillTextureCmd instance
+     * @zh 创建绘制填充贴图的命令实例
+     * @param texture 要填充的纹理
+     * @param x X轴偏移量
+     * @param y Y轴偏移量
+     * @param width 填充区域的宽度
+     * @param height 填充区域的高度
+     * @param type 填充类型
+     * @param offset 贴图纹理偏移
+     * @param color 绘图颜色
+     * @returns FillTextureCmd实例
+     */
+    static create(texture: Texture, x: number, y: number, width: number, height: number, type: string, offset: Point, color: string, percent?: boolean): FillTextureCmd {
+        if (width == null) width = texture.width;
+        if (height == null) height = texture.height;
+
+        var cmd: FillTextureCmd = Pool.getItemByClass(className, FillTextureCmd);
+        cmd.texture = texture;
+        texture._addReference();
+        cmd.x = x;
+        cmd.y = y;
+        cmd.width = width;
+        cmd.height = height;
+        cmd.type = type;
+        cmd.offset = offset;
+        cmd.color = color != null ? ColorUtils.create(color).numColor : 0xffffffff;
+        cmd.percent = percent;
+        return cmd;
+    }
+
+    /**
+     * @en Recycle to the object pool
+     * @zh 回收到对象池
+     */
+    recover(): void {
+        this.texture && this.texture._removeReference();
+        this.texture = null;
+        this.offset = null;
+        Pool.recover(className, this);
+    }
+
+    /**
+     * @en Execute the fill texture command
+     * @param runner The rendering context
+     * @param gx Global X offset
+     * @param gy Global Y offset
+     * @zh 执行绘制填充贴图命令
+     * @param runner 渲染上下文
+     * @param gx 全局X偏移
+     * @param gy 全局Y偏移
+     */
+    run(runner: GraphicsRunner, gx: number, gy: number): void {
+        if (!this.texture)
+            return;
+
+        if (this.percent && runner.sprite) {
+            let w = runner.sprite.width;
+            let h = runner.sprite.height;
+            runner.fillTexture(this.texture, this.x * w + gx, this.y * h + gy, this.width * w, this.height * h, this.type, this.offset || Point.EMPTY, this.color);
+        }
+        else
+            runner.fillTexture(this.texture, this.x + gx, this.y + gy, this.width, this.height, this.type, this.offset || Point.EMPTY, this.color);
+    }
+
+    /**
+     * @ignore
+     */
+    getBounds(assembler: IGraphicsBoundsAssembler): void {
+        let rect = Rectangle.TEMP.setTo(this.x, this.y, this.width, this.height);
+        if (this.percent) {
+            rect.scale(assembler.width, assembler.height);
+        }
+        rect.getBoundPoints(assembler.points);
+    }
+
+    /**
+     * @en The identifier for the FillTextureCmd
+     * @zh 填充贴图命令的标识符
+     */
+    get cmdID(): string {
+        return FillTextureCmd.ID;
+    }
+}
+
+ClassUtils.regClass(className, FillTextureCmd);
