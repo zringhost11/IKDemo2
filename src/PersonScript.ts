@@ -1,6 +1,3 @@
-// import { IK_Chain } from "./IK/IK_Chain";
-// import { IK_Comp } from "./IK/IK_Comp";
-
 const { IK_Comp } = Laya;
 type IK_Chain = Laya.IK_Chain;
 type IK_Comp = Laya.IK_Comp;
@@ -10,7 +7,6 @@ const { regClass, property } = Laya;
 @regClass()
 export class PersonScript extends Laya.Script {
     declare owner: Laya.Sprite3D;
-    //declare owner : Laya.Sprite;
     private animator: Laya.Animator;
     private lastDirection: number = 1; // 0: 无方向, -1: 左, 1: 右
     private rightToeBase: Laya.Sprite3D;
@@ -20,20 +16,13 @@ export class PersonScript extends Laya.Script {
     private pivotToFootOffset: number = 0;
     private pivotOffsetInitialized: boolean = false;
 
-    // 调试用：法线可视化
+    // 调试用
     private debugLineRenderer: Laya.PixelLineRenderer;
-    private debugCounter: number = 0; // 用于控制打印频率
-    private debugLineIndex: number = 0; // 当前线条索引
+    private debugLineIndex: number = 0;
     private leftChain: IK_Chain;
     private rightChain: IK_Chain;
 
-    // 脚部的初始旋转（用于补偿初始角度）
-    private rightFootInitialRotation: Laya.Quaternion;
-    private leftFootInitialRotation: Laya.Quaternion;
-
     // 基础移动参数
-    private moveSpeed: number = 1; // 米/秒
-    private runSpeedMultiplier: number = 3; // 奔跑时的速度倍率
     private gravity: number = -30; // 米/秒^2
     private verticalVelocity: number = 0;
     private isGrounded: boolean = false;
@@ -80,55 +69,28 @@ export class PersonScript extends Laya.Script {
     private readonly speedUpdateInterval: number = 10; // 速度更新间隔（毫秒）
     private nextStepPosDebug: Laya.Sprite3D;
     private camera: Laya.Camera;
-    private cameraFollowSpeedFast: number = 5; // 摄像机快速跟随速度（米/秒）- 用于初始定位
-    private cameraFollowSpeedSlow: number = 1; // 摄像机慢速跟随速度（米/秒）- 用于平滑跟随
-    private cameraFollowDistanceThreshold: number = 3; // 距离阈值（米），超过此距离使用快速，否则使用慢速
+    private cameraFollowSpeedFast: number = 5; // 摄像机快速跟随速度（米/秒）
+    private cameraFollowDistanceThreshold: number = 3; // 距离阈值（米）
     private cameraHorizontalLerpSpeed: number = 3; // 摄像机水平方向插值速度（每秒插值系数）- 降低使跟随更平滑
     private cameraVerticalLerpSpeed: number = 0.3; // 摄像机垂直方向插值速度（每秒插值系数）- 非常慢以避免跳跃感
     private cameraOffset: Laya.Vector3 = new Laya.Vector3(-5, 2, 0); // 摄像机相对于人物的偏移量（X, Y, Z）- 侧面视角（左侧）
     private cameraTargetY: number = 0; // 摄像机目标Y坐标（平滑过渡用）
     private cameraTargetYInitialized: boolean = false; // 摄像机目标Y是否已初始化
 
-    //组件被激活后执行，此时所有节点和组件均已创建完毕，此方法只执行一次
-    //onAwake(): void {}
-
-    //组件被启用后执行，例如节点被添加到舞台后
-    //onEnable(): void {}
-
-    //组件被禁用时执行，例如从节点从舞台移除后
-    //onDisable(): void {}
-
-    //第一次执行update之前执行，只会执行一次
     onStart(): void {
         const node = this.owner;
         this.camera = node.scene.getChild("Main Camera") as Laya.Camera;
-        const rightToeBase = node.findChild("mixamorig:RightFoot");
-        //const leftToeBase = node.findChild("mixamorig:LeftFoot");
-        const leftToeBase = node.findChild("LeftFoot");
-        const ikcom = node.getComponent(IK_Comp);
-        this.rightToeBase = rightToeBase;
-        this.leftToeBase = leftToeBase;
-        this.ikcom = ikcom;
+        this.rightToeBase = node.findChild("mixamorig:RightFoot");
+        this.leftToeBase = node.findChild("LeftFoot");
+        this.ikcom = node.getComponent(IK_Comp);
         (this.owner as any).checkFloor = this.checkFloor.bind(this);
 
         this.animator = node.getComponent(Laya.Animator);
         this.moveAni = this.owner.parent.getComponent(Laya.Animator);
         this.scene3D = this.owner.scene as Laya.Scene3D;
 
-        // 保存脚部的初始旋转（用于补偿初始角度）
-        if (this.rightToeBase) {
-            this.rightFootInitialRotation = this.rightToeBase.transform.rotation.clone();
-        }
-        if (this.leftToeBase) {
-            this.leftFootInitialRotation = this.leftToeBase.transform.rotation.clone();
-        }
-
         this.computePivotToFootOffset();
-
-        // 初始化调试线条渲染器（用于可视化法线）
         this.initDebugRenderer();
-
-        // 初始化速度显示UI
         this.initSpeedDisplay();
     }
     standType: "left" | "right";
@@ -160,15 +122,8 @@ export class PersonScript extends Laya.Script {
             this.rightBlendWeight = 1;
         }
     }
-    runBlend(type: string) {
-        if ("left" === type) {
-            this.leftBlendWeight = 1;
-        } else if ("right" === type) {
-            this.rightBlendWeight = 1;
-        }
 
-    }
-    runUnBlend(type: string) {
+    unBlend(type: string) {
         if ("left" === type) {
             this.leftBlendWeight = 0;
         } else if ("right" === type) {
@@ -205,10 +160,8 @@ export class PersonScript extends Laya.Script {
             }
         }
 
-        return 0; // 默认返回值
+        return 0;
     }
-
-
 
     /**
      * 实时检测两只脚中最低那只脚下方的地面位置，用于下楼时的平滑跟随
@@ -285,22 +238,13 @@ export class PersonScript extends Laya.Script {
 
         if (heightDiff > heightThreshold) {
             // 脚的地面位置低于当前人物地面位置，认为是下楼
-            console.log(`下楼 - ${footType === "left" ? "左脚" : "右脚"}地面位置(${footGroundY.toFixed(3)})低于当前人物地面位置(${currentPersonGroundY.toFixed(3)})`);
-            console.log("下楼");
             this.nextStepY2 = footGroundY;
 
-            // 设置调试标记位置到下楼的那个脚的地面位置
+            // 设置调试标记位置
             if (this.nextStepPosDebug && footPos) {
-                // 计算期望的角色中心高度（脚的地面高度 + 偏移量）
                 const pivotOffset = this.getPivotOffsetWithAdjustment();
                 const targetPersonY = footGroundY + pivotOffset;
-
-                this.nextStepPosDebug.transform.position = new Laya.Vector3(
-                    footPos.x,
-                    targetPersonY, // 使用计算出的角色中心高度
-                    footPos.z
-                );
-                console.log(`设置调试标记到${footType === "left" ? "左脚" : "右脚"}地面位置: (${footPos.x.toFixed(3)}, ${targetPersonY.toFixed(3)}, ${footPos.z.toFixed(3)})`);
+                this.nextStepPosDebug.transform.position = new Laya.Vector3(footPos.x, targetPersonY, footPos.z);
             }
         }
     }
@@ -345,21 +289,12 @@ export class PersonScript extends Laya.Script {
         if (heightDiff > heightThreshold) {
             // 不一致，设置nextStepY为当前脚的地面坐标
             this.nextStepY = expectedPersonY;
-            console.log(`${footType === "left" ? "左脚" : "右脚"}地面坐标与人物Y坐标不一致（差值: ${heightDiff.toFixed(3)}），设置nextStepY: ${this.nextStepY.toFixed(3)}`);
 
-            // 如果存在调试标记节点，更新它的位置
             if (this.nextStepPosDebug) {
-                this.nextStepPosDebug.transform.position = new Laya.Vector3(
-                    footPos.x,
-                    this.nextStepY,
-                    footPos.z
-                );
+                this.nextStepPosDebug.transform.position = new Laya.Vector3(footPos.x, this.nextStepY, footPos.z);
             }
         }
     }
-
-
-
 
     /**
      * 初始化调试渲染器
@@ -416,14 +351,6 @@ export class PersonScript extends Laya.Script {
         if (!this.rightChain) return this._rightBlendWeight;
         return this.rightChain.blendWeight;
     }
-    onLateUpdate(): void {
-
-    }
-
-    //手动调用节点销毁时执行
-    //onDestroy(): void {}
-
-    //每帧更新时执行，尽量不要在这里写大循环逻辑或者使用getComponent方法
     onUpdate(): void {
         if (!this.leftChain) {
             this.leftChain = this.ikcom.getChain("left");
@@ -506,9 +433,6 @@ export class PersonScript extends Laya.Script {
         } else if ("run" === playName) {
             this.updateGrounding(deltaTime);
         }
-
-
-
 
         // 更新摄像机跟随
         this.updateCameraFollow(deltaTime);
@@ -625,8 +549,6 @@ export class PersonScript extends Laya.Script {
 
             // 可视化：绘制碰撞点和 IK 方向
             this.drawIKDebugLines(hitPoint, targetDirection);
-        } else {
-
         }
     }
 
@@ -1109,9 +1031,4 @@ export class PersonScript extends Laya.Script {
         }
     }
 
-    //每帧更新时执行，在update之后执行，尽量不要在这里写大循环逻辑或者使用getComponent方法
-    //onLateUpdate(): void {}
-
-    //鼠标点击后执行。与交互相关的还有onMouseDown等十多个函数，具体请参阅文档。
-    //onMouseClick(): void {}
 }
