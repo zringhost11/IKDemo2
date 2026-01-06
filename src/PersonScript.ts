@@ -80,12 +80,14 @@ export class PersonScript extends Laya.Script {
     private readonly speedUpdateInterval: number = 10; // 速度更新间隔（毫秒）
     private nextStepPosDebug: Laya.Sprite3D;
     private camera: Laya.Camera;
-    private cameraFollowSpeedFast: number = 10; // 摄像机快速跟随速度（米/秒）- 用于初始定位（1秒内到位）
-    private cameraFollowSpeedSlow: number = 2; // 摄像机慢速跟随速度（米/秒）- 用于平滑跟随
+    private cameraFollowSpeedFast: number = 5; // 摄像机快速跟随速度（米/秒）- 用于初始定位
+    private cameraFollowSpeedSlow: number = 1; // 摄像机慢速跟随速度（米/秒）- 用于平滑跟随
     private cameraFollowDistanceThreshold: number = 3; // 距离阈值（米），超过此距离使用快速，否则使用慢速
-    private cameraHorizontalLerpSpeed: number = 8; // 摄像机水平方向插值速度（每秒插值系数）
-    private cameraVerticalLerpSpeed: number = 2; // 摄像机垂直方向插值速度（每秒插值系数）- 更慢以避免跳跃感
+    private cameraHorizontalLerpSpeed: number = 3; // 摄像机水平方向插值速度（每秒插值系数）- 降低使跟随更平滑
+    private cameraVerticalLerpSpeed: number = 0.3; // 摄像机垂直方向插值速度（每秒插值系数）- 非常慢以避免跳跃感
     private cameraOffset: Laya.Vector3 = new Laya.Vector3(-5, 2, 0); // 摄像机相对于人物的偏移量（X, Y, Z）- 侧面视角（左侧）
+    private cameraTargetY: number = 0; // 摄像机目标Y坐标（平滑过渡用）
+    private cameraTargetYInitialized: boolean = false; // 摄像机目标Y是否已初始化
 
     //组件被激活后执行，此时所有节点和组件均已创建完毕，此方法只执行一次
     //onAwake(): void {}
@@ -207,6 +209,42 @@ export class PersonScript extends Laya.Script {
     }
 
 
+
+    /**
+     * 实时检测两只脚中最低那只脚下方的地面位置，用于下楼时的平滑跟随
+     * @returns 返回最低脚下方的地面Y坐标，如果无法检测则返回null
+     */
+    private getLowestFootGroundY(): number | null {
+        if (!this.scene3D) {
+            return null;
+        }
+
+        let leftFootGroundY: number | null = null;
+        let rightFootGroundY: number | null = null;
+
+        // 检测左脚下方的地面
+        if (this.leftToeBase) {
+            const leftFootPos = this.leftToeBase.transform.position.clone();
+            leftFootGroundY = this.getGroundHeightAt(leftFootPos);
+        }
+
+        // 检测右脚下方的地面
+        if (this.rightToeBase) {
+            const rightFootPos = this.rightToeBase.transform.position.clone();
+            rightFootGroundY = this.getGroundHeightAt(rightFootPos);
+        }
+
+        // 返回两只脚中地面高度最低的那个
+        if (leftFootGroundY !== null && rightFootGroundY !== null) {
+            return Math.min(leftFootGroundY, rightFootGroundY);
+        } else if (leftFootGroundY !== null) {
+            return leftFootGroundY;
+        } else if (rightFootGroundY !== null) {
+            return rightFootGroundY;
+        }
+
+        return null;
+    }
 
     /**
      * 检测指定脚到地面的距离，如果低于当前人物到地面的距离，就认为是下楼
@@ -503,11 +541,27 @@ export class PersonScript extends Laya.Script {
         if ("walk" === playName) {
             const stepDirection = this.detectStepDirection(this.lastDirection);
             if (1 !== stepDirection) {
+                // 下楼或平路时，实时检测最低脚的地面位置
+                const lowestFootGroundY = this.getLowestFootGroundY();
+                if (lowestFootGroundY !== null) {
+                    // 获取当前角色脚下的地面高度
+                    const ownerWorldPos = this.owner.transform.position.clone();
+                    const currentGroundY = this.getGroundHeightAt(ownerWorldPos);
+                    
+                    if (currentGroundY !== null) {
+                        const heightDiff = currentGroundY - lowestFootGroundY;
+                        // 如果最低脚的地面位置低于当前人物地面位置，需要下降
+                        if (heightDiff > 0.05) {
+                            const pivotOffset = this.getPivotOffsetWithAdjustment();
+                            this.nextStepY2 = lowestFootGroundY + pivotOffset;
+                        }
+                    }
+                }
+                
+                // 保留原有的检测逻辑作为备用
                 if (this.standType === "left") {
-                    //检测右脚到地面的距离，如果低于当前人物到地面的距离，就认为是下楼
                     this.checkFootGroundForDownstairs("right");
                 } else if (this.standType === "right") {
-                    //检测左脚到地面的距离，如果低于当前人物到地面的距离，就认为是下楼
                     this.checkFootGroundForDownstairs("left");
                 }
             }
@@ -772,10 +826,24 @@ export class PersonScript extends Laya.Script {
         // 获取人物当前世界位置
         const characterWorldPos = this.owner.transform.position.clone();
 
-        // 计算目标摄像机位置（人物位置 + 偏移量）
+        // 计算人物的目标Y位置（带偏移）
+        const rawTargetY = characterWorldPos.y + this.cameraOffset.y;
+
+        // 初始化平滑目标Y值
+        if (!this.cameraTargetYInitialized) {
+            this.cameraTargetY = rawTargetY;
+            this.cameraTargetYInitialized = true;
+        }
+
+        // 第一层平滑：让目标Y值缓慢跟随人物Y值（非常慢，避免跳跃感）
+        const targetYLerpSpeed = 0.5; // 目标Y值的平滑速度
+        const targetYLerpFactor = Math.min(1, targetYLerpSpeed * deltaTime);
+        this.cameraTargetY = this.cameraTargetY + (rawTargetY - this.cameraTargetY) * targetYLerpFactor;
+
+        // 计算目标摄像机位置（使用平滑后的目标Y值）
         const targetCameraPos = new Laya.Vector3();
         targetCameraPos.x = characterWorldPos.x + this.cameraOffset.x;
-        targetCameraPos.y = characterWorldPos.y + this.cameraOffset.y;
+        targetCameraPos.y = this.cameraTargetY; // 使用平滑后的目标Y
         targetCameraPos.z = characterWorldPos.z + this.cameraOffset.z;
 
         // 获取摄像机当前位置
@@ -788,7 +856,6 @@ export class PersonScript extends Laya.Script {
         // 分别计算水平和垂直方向的距离
         const horizontalDiff = new Laya.Vector3(posDiff.x, 0, posDiff.z);
         const horizontalDistance = Laya.Vector3.distance(new Laya.Vector3(0, 0, 0), horizontalDiff);
-        const verticalDistance = Math.abs(posDiff.y);
         const totalDistance = Laya.Vector3.distance(currentCameraPos, targetCameraPos);
 
         // 如果距离很小，直接设置到目标位置
@@ -815,15 +882,16 @@ export class PersonScript extends Laya.Script {
         newCameraPos.x = currentCameraPos.x + (targetCameraPos.x - currentCameraPos.x) * horizontalLerpFactor;
         newCameraPos.z = currentCameraPos.z + (targetCameraPos.z - currentCameraPos.z) * horizontalLerpFactor;
 
-        // 垂直方向使用更慢的插值速度（避免跳跃感）
+        // 第二层平滑：垂直方向使用更慢的插值速度（避免跳跃感）
         const verticalLerpFactor = Math.min(1, this.cameraVerticalLerpSpeed * deltaTime);
         newCameraPos.y = currentCameraPos.y + (targetCameraPos.y - currentCameraPos.y) * verticalLerpFactor;
 
         // 更新摄像机位置
         this.camera.transform.position = newCameraPos;
 
-        // 让摄像机从侧面看向人物（侧面视角）
+        // 让摄像机从侧面看向人物（侧面视角）- 使用平滑后的Y值
         const lookAtTarget = characterWorldPos.clone();
+        lookAtTarget.y = this.cameraTargetY - this.cameraOffset.y; // 使用平滑后的目标看向位置
         this.camera.transform.lookAt(lookAtTarget, new Laya.Vector3(0, 1, 0));
     }
 
