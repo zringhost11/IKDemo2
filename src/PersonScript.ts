@@ -122,6 +122,9 @@ export class PersonScript extends Laya.Script {
             this.rightBlendWeight = 1;
         }
     }
+    runBlend(type: string) {
+        this.blend(type);
+    }
 
     unBlend(type: string) {
         if ("left" === type) {
@@ -129,6 +132,9 @@ export class PersonScript extends Laya.Script {
         } else if ("right" === type) {
             this.rightBlendWeight = 0;
         }
+    }
+    runUnBlend(type: string) {
+        this.unBlend(type);
     }
 
     checkFloor(num: string): number {
@@ -471,7 +477,7 @@ export class PersonScript extends Laya.Script {
                     // 获取当前角色脚下的地面高度
                     const ownerWorldPos = this.owner.transform.position.clone();
                     const currentGroundY = this.getGroundHeightAt(ownerWorldPos);
-                    
+
                     if (currentGroundY !== null) {
                         const heightDiff = currentGroundY - lowestFootGroundY;
                         // 如果最低脚的地面位置低于当前人物地面位置，需要下降
@@ -481,7 +487,7 @@ export class PersonScript extends Laya.Script {
                         }
                     }
                 }
-                
+
                 // 保留原有的检测逻辑作为备用
                 if (this.standType === "left") {
                     this.checkFootGroundForDownstairs("right");
